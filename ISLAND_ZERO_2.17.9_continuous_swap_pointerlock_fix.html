@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ISLAND ZERO 2.17.9｜快捷欄物品交換修正</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08131a;font-family:system-ui,"Noto Sans TC",sans-serif;color:#eef7ef}
+#game{position:fixed;inset:0}canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 5px #000}
+.panel{background:linear-gradient(135deg,#081b20dd,#102b2acc);border:1px solid #8eb8a755;border-radius:12px;padding:10px 13px;backdrop-filter:blur(7px)}
+#stats{position:absolute;left:14px;top:14px;width:min(280px,calc(100vw - 28px));display:grid;gap:7px}
+.stat{display:grid;grid-template-columns:54px 1fr 38px;align-items:center;gap:8px;font-size:12px}
+.track{height:8px;border-radius:9px;background:#233b3b;overflow:hidden}.fill{height:100%;width:100%;border-radius:9px;transition:width .2s}
+#health{background:#e56b62}#hunger{background:#e8b85b}#thirst{background:#65bde0}#stamina{background:#83d18d}
+#objective{position:absolute;top:14px;left:50%;transform:translateX(-50%);text-align:center;min-width:220px}
+#inventory{position:absolute;right:14px;top:14px;min-width:165px;font-size:12px;line-height:1.65}
+#craftPanel{position:fixed;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 28px));display:none;background:#0b2024f5;border:1px solid #9cc8a8;border-radius:16px;padding:18px;box-shadow:0 20px 70px #000b;pointer-events:auto}
+#craftPanel h2{margin:0 0 10px;color:#b9e7c2}#craftPanel .recipe{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px;margin:7px 0;background:#ffffff0b;border-radius:9px;font-size:13px}#craftPanel .recipe button{width:auto;padding:8px 12px;font-size:12px}#craftPanel .close{margin-top:8px;background:#304d48;color:#fff}
+#locationTag{position:absolute;left:14px;top:190px;font-size:12px;color:#d8f1df}
+#quick{position:absolute;right:14px;top:190px;width:165px;display:grid;gap:6px;pointer-events:auto}#quick button{padding:8px;font-size:11px;background:#23483f;color:#eaffed;border:1px solid #a4d5ad66}
+#message{position:absolute;left:50%;bottom:112px;transform:translateX(-50%);padding:9px 16px;border-radius:20px;background:#061315dd;font-size:14px;opacity:0;transition:opacity .2s;white-space:nowrap}
+#prompt{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);font-size:13px;color:#fff;background:#071619b8;padding:6px 10px;border-radius:7px}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:23px;color:#dfffe8;opacity:.8}
+#bottom{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);text-align:center;font-size:12px;color:#d2e5dd;white-space:nowrap}
+#start{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(#06131bd9,#06131bf2),radial-gradient(ellipse at center,#285746,#07131b);z-index:5}
+.card{width:min(560px,calc(100vw - 28px));padding:26px;border:1px solid #9cc8a866;border-radius:18px;background:#0b2024ed;box-shadow:0 20px 80px #0009}
+h1{margin:0 0 5px;font-size:clamp(27px,6vw,43px);letter-spacing:3px;color:#b9e7c2}
+.sub{color:#9bb8ad;margin-bottom:18px}
+.instructions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0;font-size:13px}
+.instructions div{background:#ffffff0b;border-radius:9px;padding:9px}
+button{border:0;border-radius:10px;padding:12px 18px;background:#a8e0b4;color:#092018;font-weight:800;font-size:15px;cursor:pointer;width:100%}
+#result{display:none;position:fixed;inset:0;z-index:6;place-items:center;background:#041014d9}
+#result .card{text-align:center}
+#mobile{display:none;position:fixed;inset:0;pointer-events:none;z-index:4}
+.stick-base{position:absolute;left:22px;bottom:22px;width:142px;height:142px;border-radius:50%;pointer-events:auto;touch-action:none;background:radial-gradient(circle at 35% 30%,#a6d8c044,#173b36aa 68%,#071b1dcc);border:2px solid #c3ead477;box-shadow:0 5px 22px #0008,inset 0 0 18px #d7ffe522;display:grid;place-items:center;user-select:none;-webkit-user-select:none}
+.stick-base:before{content:"";position:absolute;width:70%;height:70%;border:1px dashed #d6f5df55;border-radius:50%}
+.stick-knob{position:absolute;width:62px;height:62px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#d8f8df,#5d9d7c 58%,#245442);border:2px solid #e0ffe8aa;box-shadow:0 5px 14px #0009,inset 0 -5px 10px #09271d88;transform:translate(0,0);pointer-events:none}
+.stick-label{position:absolute;bottom:8px;font-size:9px;letter-spacing:2px;color:#e4f7e477;pointer-events:none}
+.actions{position:absolute;right:16px;bottom:25px;display:grid;grid-template-columns:repeat(2,66px);gap:8px;pointer-events:auto}.actions button{width:66px;height:52px;font-size:12px;touch-action:none}
+#lookZone{display:none;position:absolute;right:94px;top:92px;bottom:112px;width:min(42vw,300px);pointer-events:auto;touch-action:none;border:1px dashed #d9f4df22;border-radius:18px;background:#0b20240b}
+#lookHint{position:absolute;right:112px;bottom:118px;font-size:10px;color:#e4f3e677;pointer-events:none}
+@media (pointer:coarse){button{touch-action:manipulation}#lookZone{display:block}}
+@media(max-width:700px),(pointer:coarse){#mobile{display:block}#bottom{bottom:5px;font-size:10px;max-width:54vw;white-space:normal}#inventory{top:auto;bottom:18px;right:12px;font-size:11px;max-width:42vw;padding:7px 9px}#stats{width:clamp(150px,31vw,205px);left:8px;top:8px;padding:7px 9px;gap:5px}.stat{grid-template-columns:40px 1fr 26px;font-size:9px;gap:5px}.track{height:7px}#objective{top:8px;font-size:10px;min-width:150px;padding:7px 9px}#locationTag{top:160px;left:8px;font-size:10px}#quick{top:190px;right:8px;width:126px;gap:4px}#quick button{padding:6px 4px;font-size:9px}#message{bottom:108px;font-size:12px;max-width:78vw;white-space:normal;text-align:center}#prompt{top:54%;font-size:11px}#crosshair{font-size:19px}.pad{left:10px;bottom:14px;grid-template-columns:repeat(3,43px);gap:3px}.stick-base{width:128px;height:128px;left:10px;bottom:14px}.stick-knob{width:56px;height:56px}.actions{right:9px;bottom:13px;grid-template-columns:repeat(2,58px);gap:5px}.actions button{width:58px;height:46px;font-size:10px}#lookZone{right:75px;top:100px;bottom:110px;width:40vw}#lookHint{right:86px;bottom:112px;font-size:9px}.instructions{grid-template-columns:1fr 1fr}.card{padding:18px;max-height:94dvh;overflow:auto}.card p{font-size:12px;line-height:1.5}}
+@media(max-width:700px) and (orientation:landscape){#stats{width:175px}#objective{top:7px}#inventory{top:8px;bottom:auto;max-width:30vw}#quick{top:125px;right:8px;width:120px}#locationTag{top:130px}#bottom{bottom:3px;left:50%;max-width:38vw}#message{bottom:84px}#lookZone{top:75px;bottom:82px}#lookHint{bottom:84px}.stick-base{bottom:8px;left:8px;width:116px;height:116px}.stick-knob{width:52px;height:52px}.actions{bottom:8px;right:8px}}
+
+/* 2.14 backpack + quickbar */
+#inventory{pointer-events:auto;cursor:pointer;min-width:0;padding:8px 12px;font-weight:800;color:#e8ffe9}
+#backpackPanel{display:none;position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 24px));max-height:min(82dvh,680px);overflow:auto;background:linear-gradient(145deg,#0a1b20f7,#17352df7);border:1px solid #a6d9ad99;border-radius:18px;padding:16px;box-shadow:0 20px 80px #000d;pointer-events:auto;text-shadow:none}
+#backpackPanel.open{display:block}#backpackPanel.open ~ #hotbar{z-index:60!important}#backpackPanel h2{margin:0;color:#c8f3cd;font-size:21px}#backpackPanel .bphead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}#backpackPanel .bphead button{width:auto;padding:7px 12px;font-size:12px;background:#31584b;color:white}
+#bpGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}#bpGrid .bpitem{min-height:76px;background:#ffffff0b;border:1px solid #8eb8a755;border-radius:10px;padding:9px;text-align:center;color:#effff0;font-size:12px}#bpGrid .bpitem b{display:block;font-size:19px;margin-bottom:3px}#bpGrid .bpitem small{color:#b4d2bd}
+#bpResources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:12px;font-size:12px;color:#d6e9dc}#bpResources span{background:#ffffff0a;padding:7px;border-radius:7px}
+#hotbar{position:fixed;z-index:5;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#061619c9;border:1px solid #a4d5ad66;border-radius:13px;backdrop-filter:blur(8px);pointer-events:auto;max-width:calc(100vw - 300px)}
+.hot-slot{width:58px;height:58px;flex:0 0 58px;border:1px solid #a9cdb866;border-radius:9px;background:#112a27eF;color:#efffee;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:10px;text-shadow:none}
+.hot-slot .ico{font-size:19px;line-height:22px}.hot-slot small{font-size:9px;color:#b8d6c1}.hot-slot.selected{border:2px solid #c5f2a9;background:#365d42;box-shadow:0 0 12px #a9e99a66}
+#selectedAction{position:fixed;z-index:5;left:50%;bottom:82px;transform:translateX(-50%);width:auto;min-width:112px;padding:8px 14px;font-size:12px;background:#a8e0b4;color:#092018;pointer-events:auto;display:none}
+#leftHandRig{pointer-events:none}
+@media(max-width:700px),(pointer:coarse){#hotbar{bottom:210px;gap:3px;padding:4px;max-width:calc(100vw - 145px);overflow-x:auto;left:50%;} .hot-slot{width:43px;height:48px;flex-basis:43px;font-size:8px}.hot-slot .ico{font-size:16px}#selectedAction{bottom:264px;left:50%;min-width:94px;padding:7px 9px}#bpGrid{grid-template-columns:repeat(3,minmax(0,1fr))}#inventory{top:70px!important;right:8px!important;bottom:auto!important;font-size:10px;padding:7px 9px}#quick{top:190px}}
+@media(max-width:700px) and (orientation:landscape){#hotbar{bottom:4px;max-width:calc(100vw - 265px)}.hot-slot{height:43px;width:42px;flex-basis:42px}#selectedAction{bottom:53px}#inventory{top:8px!important}}
+
+
+/* 2.15 mobile layout + settings */
+#settingsBtn{position:fixed;z-index:20;top:12px;right:12px;width:42px;height:42px;padding:0;border-radius:13px;background:#102b27eF;border:1px solid #b8e8c488;color:#eaffed;font-size:23px;box-shadow:0 4px 18px #0008;pointer-events:auto}
+#settingsPanel{display:none;position:fixed;z-index:30;right:12px;top:62px;width:min(310px,calc(100vw - 24px));padding:15px;border-radius:15px;background:#0a1c20f5;border:1px solid #a6d9ad99;box-shadow:0 16px 50px #000c;pointer-events:auto;text-shadow:none;color:#edfff0}
+#settingsPanel.open{display:grid;gap:11px}.settingsHead{display:flex;align-items:center;justify-content:space-between;font-size:17px;color:#c8f3cd}.settingsHead button{width:34px;padding:7px;background:#31584b;color:#fff}#settingsPanel label{display:grid;gap:6px;font-size:13px}#settingsPanel select{width:100%;padding:10px;border-radius:8px;background:#183a32;color:#efffee;border:1px solid #8eb8a7}#settingsPanel>button{font-size:12px;padding:10px;background:#a8e0b4;color:#092018}#settingsPanel .secondarySetting{background:#35564c;color:#efffee}.settingsNote{margin:0;color:#b3cfc0;font-size:11px;line-height:1.5}
+#inventory{z-index:6}
+@media(max-width:700px),(pointer:coarse){
+ #settingsBtn{top:8px;right:8px;width:38px;height:38px}
+ #inventory{top:54px!important;right:8px!important;bottom:auto!important;left:auto!important;max-width:38vw}
+ #lookZone{right:8px;top:105px;bottom:150px;width:44vw;border-color:#d9f4df18}
+ #lookHint{right:15px;bottom:151px}
+ #actions{right:8px}
+ #hotbar{bottom:8px;left:50%;max-width:calc(100vw - 270px);transform:translateX(-50%)}
+ #selectedAction{bottom:66px}
+}
+@media(max-width:700px) and (orientation:portrait){
+ #lookZone{right:8px;top:125px;bottom:245px;width:47vw}
+ #lookHint{right:13px;bottom:247px}
+ #hotbar{left:50%;bottom:8px;max-width:calc(100vw - 18px);width:max-content;max-width:calc(100vw - 18px)}
+ #selectedAction{bottom:70px}
+ #inventory{top:54px!important;right:8px!important;max-width:42vw}
+}
+@media(max-width:700px) and (orientation:landscape){
+ #lookZone{right:8px;top:70px;bottom:78px;width:36vw}
+ #lookHint{right:14px;bottom:80px}
+ #hotbar{bottom:5px;left:50%;max-width:calc(100vw - 270px)}
+ #selectedAction{bottom:53px}
+}
+body.layout-edit #mobile .stick-base,body.layout-edit #mobile .actions,body.layout-edit #lookZone,body.layout-edit #hotbar,body.layout-edit #inventory{outline:2px dashed #ffe28a;cursor:move;touch-action:none}
+body.layout-edit #lookZone{background:#9bd8ad22;border-color:#ffe28a}
+
+
+/* 2.16: readable Minecraft-like acquired-item hotbar */
+#hotbar{z-index:80!important;min-height:68px;max-width:min(760px,calc(100vw - 24px));overflow-x:auto;scrollbar-width:thin;justify-content:center;background:linear-gradient(180deg,#1c2928ed,#071011f2);border:2px solid #84918b;border-radius:8px;gap:4px;padding:5px;}
+.hot-slot{position:relative;width:58px;height:58px;flex:0 0 58px;border:2px solid #68736d;border-radius:4px;background:linear-gradient(145deg,#444d49d9,#1b2422ee);box-shadow:inset 0 0 0 2px #101715;color:#fff;padding:2px;display:flex;align-items:center;justify-content:center;text-shadow:1px 2px 2px #000;font-size:9px;}
+.hot-slot .ico{font-size:27px;line-height:32px;filter:drop-shadow(1px 2px 1px #000)}
+.hot-slot .slot-name{display:none}
+.hot-slot .hot-count{position:absolute;right:3px;bottom:1px;font-size:13px;font-weight:900;color:#fff;text-shadow:1px 2px 2px #000;line-height:1.1}
+.hot-slot.selected{border:2px solid #f2df8b;background:linear-gradient(145deg,#68734d,#293b2a);box-shadow:inset 0 0 0 2px #d9c77a,0 0 8px #e7d58a88}
+.hot-slot.empty{opacity:.72;background:#111a19bb;border-color:#4b5550}
+@media(max-width:700px),(pointer:coarse){#hotbar{bottom:7px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 14px);width:max-content;justify-content:flex-start;min-height:55px}.hot-slot{width:47px;height:47px;flex-basis:47px}.hot-slot .ico{font-size:23px}#selectedAction{bottom:68px}}
+@media(max-width:700px) and (orientation:landscape){#hotbar{bottom:5px;max-width:calc(100vw - 260px);left:50%;width:max-content}.hot-slot{width:43px;height:43px;flex-basis:43px}.hot-slot .ico{font-size:21px}#selectedAction{bottom:53px}}
+/* Crafting should never cover the cursor after it releases pointer lock. */
+#craftPanel{z-index:35}
+
+
+/* 2.17 inventory + unified item controls */
+#inventory{display:none!important}
+#quick{z-index:8}
+#hotbar{gap:3px;max-width:min(760px,calc(100vw - 24px));pointer-events:auto;}#hotbar .hot-slot.pending-target{outline:2px dashed #8fe0ff;outline-offset:1px;}#hotbar .hot-slot{pointer-events:auto;}#hotbar:has(.pending-target) .hot-slot{border-color:#8fe0ff;}
+.hot-slot.ellipsis-slot{font-size:23px;font-weight:900;letter-spacing:2px;border-style:dashed;background:linear-gradient(145deg,#273c3a,#101b1a);}
+.hot-slot.pending-target{outline:2px solid #8fe0ff;outline-offset:2px}
+#backpackPanel .bpitem.pending{border:2px solid #8fe0ff;background:#254b50;box-shadow:0 0 12px #8fe0ff66}#bpGrid .bpitem{cursor:pointer;pointer-events:auto}#backpackPanel{z-index:70}
+@media(max-width:700px),(pointer:coarse){
+ #actions{position:absolute;right:7px;top:50%;bottom:auto;transform:translateY(-50%);display:grid;grid-template-columns:1fr;gap:5px;width:61px;}
+ #actions button{width:61px;height:43px;padding:3px;font-size:10px;line-height:1.15;border:1px solid #c4e8cf88;background:#163a35eF;color:#f1fff2;box-shadow:0 2px 8px #0008}
+ #lookZone{right:70px;top:90px;bottom:90px;width:38vw;}
+ #lookHint{right:76px;bottom:92px}
+ #hotbar{bottom:7px;left:50%;width:auto;max-width:calc(100vw - 145px);overflow-x:auto;justify-content:flex-start;min-height:52px;padding:3px;gap:2px;}
+ .hot-slot{width:38px;height:42px;flex-basis:38px;}
+ .hot-slot .ico{font-size:20px;line-height:22px}
+ #selectedAction{display:none!important}
+ #backpackPanel{max-height:76dvh}
+}
+@media(max-width:700px) and (orientation:landscape){
+ #actions{right:6px;top:50%;gap:3px;width:55px}
+ #actions button{width:55px;height:39px;font-size:9px}
+ #lookZone{right:62px;top:48px;bottom:56px;width:34vw}
+ #lookHint{right:66px;bottom:57px}
+ #hotbar{bottom:4px;max-width:calc(100vw - 215px)}
+ .hot-slot{width:37px;height:40px;flex-basis:37px}
+}
+@media(max-width:700px) and (orientation:portrait){
+ #actions{right:6px;top:50%;}
+ #lookZone{right:68px;top:115px;bottom:165px;width:42vw}
+ #hotbar{bottom:6px;max-width:calc(100vw - 142px)}
+}
+
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+ <div id="stats" class="panel">
+  <div class="stat"><b>生命</b><div class="track"><div class="fill" id="health"></div></div><span id="healthN">100</span></div>
+  <div class="stat"><b>飢餓</b><div class="track"><div class="fill" id="hunger"></div></div><span id="hungerN">100</span></div>
+  <div class="stat"><b>口渴</b><div class="track"><div class="fill" id="thirst"></div></div><span id="thirstN">100</span></div>
+  <div class="stat"><b>體力</b><div class="track"><div class="fill" id="stamina"></div></div><span id="staminaN">100</span></div>
+ </div>
+ <div id="objective" class="panel">DAY 1 · 08:00<br><b>任務：收集物資，撐過夜晚</b></div>
+ <div id="inventory" hidden><span id="bagCount">0</span><span id="woodN"></span><span id="stoneN"></span><span id="fiberN"></span><span id="clothN"></span><span id="foodN"></span><span id="waterN"></span><span id="herbN"></span><span id="medN"></span><span id="metalN"></span><span id="pulseN"></span></div>
+ <div id="backpackPanel"><div class="bphead"><h2>🎒 生存背包</h2><button id="closeBag" type="button">關閉 ✕</button></div><p id="bpHint" style="margin:0 0 10px;color:#bde6ee;font-size:12px">先點選背包物品，再點下方 1–9 格即可替換；藍色虛線表示可放入的格子。</p><div id="bpGrid"></div><div id="bpResources"></div></div>
+ <button id="settingsBtn" type="button" aria-label="設定">⚙</button>
+ <section id="settingsPanel" aria-label="遊戲設定"><div class="settingsHead"><b>⚙ 遊戲設定</b><button id="closeSettings" type="button">✕</button></div><label>畫質 <select id="qualitySelect"><option value="low">省電 / 流暢</option><option value="medium" selected>平衡</option><option value="high">高畫質</option></select></label><p class="settingsNote">畫質調整會影響解析度與陰影效果。</p><button id="editControls" type="button">調整按鍵位置：關閉</button><p class="settingsNote">開啟後可直接拖曳搖桿、操作按鈕、視角區、背包與快速欄。完成後再按一次關閉。</p><button id="resetControls" type="button" class="secondarySetting">恢復預設位置</button></section>
+ <div id="hotbar" aria-label="快速物品欄"></div>
+ <div id="locationTag">📍 海岸營地</div>
+ <div id="quick"><button id="craftBtn">🧰 製作 / C</button><button id="saveBtn">💾 儲存 / R</button></div>
+ <div id="crosshair">＋</div><div id="prompt"></div><div id="message"></div>
+ <div id="bottom">WASD 移動 · 滑鼠環視 · 裝備石斧後按 E 砍樹 · E 蒐集 · 左鍵使用 · 1–9 或滾輪切換 · F 背包 · Q 丟棄 · R 儲存 · Ctrl 解除滑鼠鎖定 · C 製作</div>
+</div>
+<div id="mobile">
+ <div class="stick-base" id="moveStick" role="application" aria-label="虛擬移動搖桿"><div class="stick-knob" id="stickKnob"></div><span class="stick-label">MOVE</span></div>
+ <div id="lookZone" aria-label="觸控滑動環視區"></div><div id="lookHint">滑動此區域環視</div>
+ <div class="actions" id="actions"><button data-action="drop">丟棄</button><button data-action="collect">蒐集<br>物資</button><button data-action="use">使用</button><button data-action="run">奔跑</button><button data-action="crouch">潛行</button></div>
+</div>
+<div id="start"><div class="card">
+ <h1>ISLAND ZERO</h1><div class="sub">殭屍末日 · 建築搜刮・四種武器・感染者 AI</div>
+ <p>你在一座廣闊的隔離島嶼醒來。島嶼探索範圍擴大為原本的兩倍，物資分散在不同生態區與遠方據點；請規劃路線、留意補給與體力。到森林裡尋找野生莓果、摘取樹上的果實，從枯枝、岩石和野草取得材料，也能沿溪流取水。探索廢棄小鎮、診療所與研究站，尋找椰子樹與野生菇群，設法在島上長期生存。</p>
+ <div class="instructions">
+  <div>⌨️ <b>WASD</b><br>移動與探索</div><div>🖱️ / 👆 <b>滑鼠或觸控</b><br>滑動畫面右側環視</div>
+  <div>🌿 <b>E</b><br>採集灌木莓果、樹上果實、椰子與野菇</div><div>🎒 <b>F</b><br>開啟背包並解除滑鼠鎖定</div>
+  <div>🏃 <b>Shift</b><br>消耗體力奔跑</div><div>🤫 <b>蹲下/潛行</b><br>降低移動速度與被感染者察覺的距離</div><div>🌙 <b>生存</b><br>留意飢餓與口渴</div><div>🧰 <b>C</b><br>開啟/關閉製作台；開啟時解除滑鼠鎖定</div><div>🖱️ <b>左鍵</b><br>使用食物/水或使用工具</div><div>🔢 <b>1–9 / 滾輪</b><br>切換快速物品欄</div><div>🗑️ <b>Q</b><br>丟棄目前選取物品</div><div>⌃ <b>Ctrl</b><br>解除滑鼠鎖定</div>
+ </div>
+ <button id="startBtn">開始新旅程</button><button id="loadBtn" style="margin-top:9px;background:#355d50;color:#eaffed">讀取上次進度</button><p id="saveInfo" style="font-size:11px;color:#9db9aa;margin:8px 0 0">尚無已儲存的進度</p>
+ <p style="font-size:11px;color:#8ea99e;margin:13px 0 0">支援電腦、手機與平板。感染者分為普通型、快速型與厚重型，攻擊命中會有受擊回饋。可製作長矛。手機/平板：左下虛擬搖桿移動，右側空白區滑動環視，右側五個按鈕操作。遊戲會定時自動保存，也可手動儲存；讀檔時物資與補給箱會重新生成。建議橫向遊玩。</p>
+ </div></div>
+<div id="craftPanel"><h2>🧰 生存製作台</h2><div class="recipe"><span>石斧<br><small>木材 ×3、石材 ×3、纖維 ×2</small></span><button id="makeAxe">製作</button></div><div class="recipe"><span>簡易弓<br><small>木材 ×4、纖維 ×4</small></span><button id="makeBow">製作</button></div><div class="recipe"><span>訊號手槍<br><small>石材 ×3、金屬零件 ×2（零件可在警務站/研究站搜刮）</small></span><button id="makeFlare">製作</button></div><div class="recipe"><span>簡易長矛<br><small>木材 ×4、石材 ×2、纖維 ×2（放入快速物品欄後選取，滑鼠左鍵使用）</small></span><button id="makeSpear">製作</button></div><div class="recipe"><span>醫療包<br><small>布料 ×2、草藥 ×2</small></span><button id="makeMed">製作</button></div><div class="recipe"><span>安全營地套件 ×1<br><small>木材 ×6、纖維 ×2；製作後放入物品欄，選取後使用</small></span><button id="makeCamp">製作</button></div><div class="recipe"><span>防護脈衝 ×1<br><small>石材 ×2、纖維 ×2；製作後放入物品欄</small></span><button id="makePulse">製作</button></div><div class="recipe"><span>補給標記<br><small>木材 ×2（標示附近物資）</small></span><button id="makeMarker">製作</button></div><div class="recipe"><span>簡易遮雨棚<br><small>木材 ×5、纖維 ×4（靠近可減緩夜間體力消耗）</small></span><button id="makeShelter">建造</button></div><div class="recipe"><span>草藥敷料<br><small>草藥 ×2、纖維 ×1（恢復生命）</small></span><button id="makeHerbKit">製作</button></div><button class="close" id="closeCraft">關閉</button></div>
+<div id="result"><div class="card"><h1 id="resultTitle">生存結束</h1><p id="resultText"></p><button id="restartBtn">重新開始</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+let scene,camera,renderer,clock,player,started=false,ended=false,locked=false;
+let yaw=0,pitch=0,health=100,hunger=100,thirst=100,stamina=100,wood=0,food=0,water=0,pulses=0,campKits=0;
+let dayTime=8*60,day=1,elapsed=0,lastMsg=0,nearby=null,items=[],zombies=[],keys={},mobileRun=false,crouching=false,stickX=0,stickY=0,stickPointer=null,lastAutoSave=0;
+const SAVE_KEY="island_zero_save_v210";
+let cloth=0,medkits=0,stone=0,fiber=0,herbs=0,metalParts=0,camps=[],poi=[],openedCrates=0,shelters=[],colliders=[],flashlight=null,flashlightFill=null,flashlightOn=false;
+let handRig=null,leftHandRig=null,flashlightModel=null,spearModel=null,axeModel=null,bowModel=null,flareModel=null,weaponOwned=false,weaponEquipped=false,weaponType='spear',weapons={spear:false,axe:false,bow:false,flare:false},pickupAnim=0,attackAnim=0,handBlend=0,drawAnim=0,interactAnim=0,noiseLevel=0,noiseTimer=0,noiseX=0,noiseZ=0,interiorContainers=[],currentInterior=null;
+const WORLD_SCALE=2, islandRadius=244, playableRadius=232, worldObjects=[],harvestableTrees=[],harvestablePalms=[],harvestableFruitTrees=[];
+function rnd(a,b){return a+Math.random()*(b-a)}
+const COLLIDER_CELL=12,colliderGrid=new Map();
+function colliderKey(ix,iz){return ix+','+iz}
+function indexCollider(c){const ex=c.kind==='circle'?c.r:c.hx,ez=c.kind==='circle'?c.r:c.hz;c._cells=[];for(let ix=Math.floor((c.x-ex)/COLLIDER_CELL);ix<=Math.floor((c.x+ex)/COLLIDER_CELL);ix++)for(let iz=Math.floor((c.z-ez)/COLLIDER_CELL);iz<=Math.floor((c.z+ez)/COLLIDER_CELL);iz++){const k=colliderKey(ix,iz);let a=colliderGrid.get(k);if(!a)colliderGrid.set(k,a=[]);a.push(c);c._cells.push(k)}}
+function addCircleCollider(x,z,r){const c={kind:'circle',x,z,r};colliders.push(c);indexCollider(c);return c}
+function addBoxCollider(x,z,hx,hz){const c={kind:'box',x,z,hx,hz};colliders.push(c);indexCollider(c);return c}
+function removeCollider(c){if(!c)return;const i=colliders.indexOf(c);if(i>=0)colliders.splice(i,1);for(const k of c._cells||[]){const a=colliderGrid.get(k);if(a){const j=a.indexOf(c);if(j>=0)a.splice(j,1);if(!a.length)colliderGrid.delete(k)}}}
+function blocked(x,z,pr=.62){const minX=Math.floor((x-pr)/COLLIDER_CELL),maxX=Math.floor((x+pr)/COLLIDER_CELL),minZ=Math.floor((z-pr)/COLLIDER_CELL),maxZ=Math.floor((z+pr)/COLLIDER_CELL),seen=new Set();for(let ix=minX;ix<=maxX;ix++)for(let iz=minZ;iz<=maxZ;iz++){const a=colliderGrid.get(colliderKey(ix,iz));if(!a)continue;for(const c of a){if(seen.has(c))continue;seen.add(c);if(c.kind==='circle'){if(Math.hypot(x-c.x,z-c.z)<c.r+pr)return true}else{const qx=Math.max(c.x-c.hx,Math.min(x,c.x+c.hx)),qz=Math.max(c.z-c.hz,Math.min(z,c.z+c.hz));if((x-qx)*(x-qx)+(z-qz)*(z-qz)<pr*pr)return true}}}return false}
+function terrainHeight(x,z){const r=Math.hypot(x,z), inland=2.15-.000035*r*r+.42*Math.sin(x*.045)*Math.cos(z*.052);const t=Math.max(0,Math.min(1,(r-204)/40));const coast=t*t*(3-2*t);return inland*(1-coast)+(-3.35)*coast}
+function showMsg(t){$('message').textContent=t;$('message').style.opacity=1;lastMsg=2.2}
+function makeNoise(level){noiseLevel=level;noiseTimer=4;noiseX=player?.x||0;noiseZ=player?.z||0}
+function makeMat(color,rough=.9){return new THREE.MeshStandardMaterial({color,roughness:rough})}
+function addTree(x,z,scale=1){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const y=terrainHeight(x,z),g=new THREE.Group();
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25*scale,.38*scale,2.7*scale,7),makeMat(0x59432d));trunk.position.y=1.35*scale;g.add(trunk);
+ for(let i=0;i<3;i++){const crown=new THREE.Mesh(new THREE.ConeGeometry((1.8-i*.22)*scale,2.7*scale,7),makeMat(i===0?0x24563b:0x2f7048));crown.position.y=(3+i*.85)*scale;g.add(crown)}
+ g.position.set(x,y,z);scene.add(g);worldObjects.push(g);const treeCollider=addCircleCollider(x,z,.58*scale);harvestableTrees.push({mesh:g,x,z,scale,collider:treeCollider,regrowAt:0});
+}
+function addRock(x,z,s=1){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const m=new THREE.Mesh(new THREE.DodecahedronGeometry(.8*s,0),makeMat(0x777f7a));m.position.set(x,terrainHeight(x,z)+.35*s,z);m.scale.set(1.2,.8,1);scene.add(m);worldObjects.push(m);const collider=addCircleCollider(x,z,.72*s);
+ items.push({type:'stone',mesh:m,ring:null,x,z,resource:true,collider,colliderRadius:.72*s,baseY:m.position.y,baseScale:m.scale.clone()});
+}
+function addItem(type,x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ let mesh,mat;
+ if(type==='wood'){
+  mesh=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,1.35,7),makeMat(0x795331));mesh.rotation.z=Math.PI/2;mesh.rotation.x=.12;
+ }else if(type==='water'){
+  const g=new THREE.Group();const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.17,.2,.58,9),new THREE.MeshStandardMaterial({color:0x55b9d6,transparent:true,opacity:.82,roughness:.25}));bottle.position.y=.28;g.add(bottle);const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.1,8),makeMat(0xd8e8df));cap.position.y=.62;g.add(cap);mesh=g;
+ }else if(type==='cloth'){
+  mesh=new THREE.Mesh(new THREE.BoxGeometry(.55,.16,.45),makeMat(0xb7a5d9));mesh.rotation.y=.4;
+ }else{
+  const color={food:0xe5a34d,med:0xe8e8dc}[type]||0xffffff;mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(.35,0),makeMat(color));
+ }
+ mesh.position.set(x,terrainHeight(x,z)+.2,z);scene.add(mesh);
+ items.push({type,mesh,ring:null,x,z,resource:true,baseY:mesh.position.y});
+}
+function addFiberPlant(x,z,type='fiber'){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const g=new THREE.Group();
+ if(type==='fiber'){
+  // Harvestable fiber is a tall, upright tuft with pale seed heads; decorative ferns stay low and broad.
+  const leaf=makeMat(0x91a94b),stem=makeMat(0x6e8740),seed=makeMat(0xd8c58a);
+  for(let i=0;i<7;i++){const a=i*Math.PI*2/7,reach=.22+(i%3)*.045,h=1.05+(i%3)*.16;const blade=new THREE.Mesh(new THREE.ConeGeometry(.075,h,4),leaf);blade.position.set(Math.cos(a)*reach,h*.48,Math.sin(a)*reach);blade.rotation.z=Math.cos(a)*-.17;blade.rotation.x=Math.sin(a)*.17;g.add(blade);}
+  for(let i=0;i<3;i++){const a=i*Math.PI*2/3;const stalk=new THREE.Mesh(new THREE.CylinderGeometry(.018,.028,.92,5),stem);stalk.position.set(Math.cos(a)*.09,.72,Math.sin(a)*.09);stalk.rotation.z=Math.cos(a)*-.12;stalk.rotation.x=Math.sin(a)*.12;g.add(stalk);const head=new THREE.Mesh(new THREE.ConeGeometry(.075,.25,5),seed);head.position.set(Math.cos(a)*.09,1.22,Math.sin(a)*.09);g.add(head);}
+  const marker=new THREE.Mesh(new THREE.TorusGeometry(.34,.035,5,18),new THREE.MeshBasicMaterial({color:0xc5d77a}));marker.rotation.x=Math.PI/2;marker.position.y=.035;g.add(marker);
+ }else{
+  const green=makeMat(0x477d45),flower=makeMat(0xb8a2d9);
+  for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const blade=new THREE.Mesh(new THREE.ConeGeometry(.12,.9,5),green);blade.position.set(Math.cos(a)*.2,.43,Math.sin(a)*.2);blade.rotation.z=Math.cos(a)*-.25;blade.rotation.x=Math.sin(a)*.25;g.add(blade)}
+  for(let i=0;i<3;i++){const f=new THREE.Mesh(new THREE.SphereGeometry(.12,7,6),flower);f.position.set((i-1)*.18,.82,.08);g.add(f)}
+ }
+ g.position.set(x,terrainHeight(x,z),z);scene.add(g);items.push({type,mesh:g,ring:null,x,z,resource:true,baseY:g.position.y});
+}
+function addStream(){
+ // A shallow, terrain-following ribbon replaces the old cylindrical tube.
+ const route=[[-48,-4],[-40,-1],[-34,1],[-28,4],[-22,7],[-16,9],[-10,10],[-4,13],[2,15],[8,17],[14,19],[21,22],[28,25],[35,28],[43,31]];
+ const centers=route.map(([x,z])=>new THREE.Vector2(x*WORLD_SCALE,z*WORLD_SCALE));
+ const vertices=[],uv=[],indices=[];
+ for(let i=0;i<centers.length;i++){
+  const prev=centers[Math.max(0,i-1)],next=centers[Math.min(centers.length-1,i+1)];
+  const dx=next.x-prev.x,dz=next.y-prev.y,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;
+  const t=i/(centers.length-1),width=(2.15+Math.sin(t*Math.PI)*.9)*WORLD_SCALE*.5;
+  const c=centers[i];
+  for(const side of [-1,1]){const x=c.x+nx*width*side,z=c.y+nz*width*side;vertices.push(x,terrainHeight(x,z)+.055,z);uv.push(side===-1?0:1,t*8);}
+  if(i<centers.length-1){const a=i*2,b=a+1,c=a+2,d=a+3;indices.push(a,b,c,b,d,c);}
+ }
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();
+ const waterMat=new THREE.MeshStandardMaterial({color:0x438fa0,transparent:true,opacity:.84,roughness:.28,metalness:.02,side:THREE.DoubleSide});
+ const waterMesh=new THREE.Mesh(geo,waterMat);waterMesh.position.y=.012;waterMesh.receiveShadow=true;scene.add(waterMesh);
+ // Narrow muddy banks visually blend the water into the terrain.
+ for(let i=1;i<centers.length-1;i+=2){const c=centers[i];for(const side of [-1,1]){const prev=centers[i-1],next=centers[i+1],dx=next.x-prev.x,dz=next.y-prev.y,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;const x=c.x+nx*side*2.35,z=c.y+nz*side*2.35;const peb=new THREE.Mesh(new THREE.SphereGeometry(.22,7,5),makeMat(0x77796b));peb.scale.set(1,.25,1);peb.position.set(x,terrainHeight(x,z)+.12,z);scene.add(peb);}}
+ // Small flat highlights suggest moving ripples without adding raised geometry.
+ const rippleMat=new THREE.MeshBasicMaterial({color:0xb6e3df,transparent:true,opacity:.25,side:THREE.DoubleSide});
+ for(let i=2;i<centers.length-1;i+=3){const c=centers[i];const ripple=new THREE.Mesh(new THREE.PlaneGeometry(.9,.035),rippleMat);ripple.rotation.x=-Math.PI/2;ripple.rotation.z=Math.atan2(centers[i+1].y-centers[i-1].y,centers[i+1].x-centers[i-1].x);ripple.position.set(c.x,terrainHeight(c.x,c.y)+.075,c.y);scene.add(ripple);}
+ for(const [x,z] of [[-36,1],[-22,7],[-8,10],[8,17],[24,23]]){const sx=x*WORLD_SCALE,sz=z*WORLD_SCALE;const pool=new THREE.Mesh(new THREE.CircleGeometry(1.05,20),new THREE.MeshStandardMaterial({color:0x55a7b8,transparent:true,opacity:.82,roughness:.22,side:THREE.DoubleSide}));pool.rotation.x=-Math.PI/2;pool.position.set(sx,terrainHeight(sx,sz)+.08,sz);scene.add(pool);items.push({type:'spring',mesh:pool,ring:null,x:sx,z:sz,resource:true,baseY:pool.position.y});}
+}
+function addBerryBush(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const y=terrainHeight(x,z),bush=new THREE.Group(),berries=new THREE.Group();
+ const leafMat=makeMat(0x315f38),twigMat=makeMat(0x59432d);
+ // Low woody stems and broad leaves make this read as a real shrub, not a pickup icon.
+ for(let i=0;i<5;i++){
+  const a=i*Math.PI*2/5,dx=Math.cos(a),dz=Math.sin(a);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,.9,5),twigMat);
+  stem.position.set(dx*.22,.45,dz*.22);stem.rotation.z=dx*.38;stem.rotation.x=dz*.38;bush.add(stem);
+  const leaf=new THREE.Mesh(new THREE.SphereGeometry(.42,8,7),leafMat);
+  leaf.position.set(dx*.48,.68+(i%2)*.12,dz*.48);leaf.scale.set(1,.55,.72);bush.add(leaf);
+ }
+ for(let i=0;i<3;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.43,8,7),makeMat(0x3e7542));leaf.position.set((i-1)*.25,.83,.05);leaf.scale.set(1,.55,.8);bush.add(leaf)}
+ // Several visible berry clusters sit on the outer branches.
+ const berryMat=new THREE.MeshStandardMaterial({color:0x9f1747,roughness:.48});
+ for(let c=0;c<4;c++){
+  const a=c*Math.PI/2+.35,cx=Math.cos(a)*.48,cz=Math.sin(a)*.48;
+  for(let j=0;j<3;j++){const berry=new THREE.Mesh(new THREE.SphereGeometry(.115,9,8),berryMat);berry.position.set(cx+(j-1)*.13,.72+(j%2)*.13,cz);berries.add(berry)}
+ }
+ bush.position.set(x,y,z);berries.position.set(x,y,z);scene.add(bush,berries);
+ items.push({type:'berry',mesh:berries,ring:null,x,z,resource:true,baseY:berries.position.y});
+}
+function addTreeFruit(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const y=terrainHeight(x,z),tree=new THREE.Group(),fruitGroup=new THREE.Group();
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,3.6,8),makeMat(0x65472d));trunk.position.y=1.8;tree.add(trunk);
+ const crownMat=makeMat(0x356b3d);
+ for(const [cx,cy,cz,sc] of [[0,3.4,0,1.45],[-.8,3.1,.15,1],[.75,3.15,-.1,1],[0,4.05,.1,.95]]){const crown=new THREE.Mesh(new THREE.SphereGeometry(sc,9,8),crownMat);crown.position.set(cx,cy,cz);crown.scale.set(1,.82,1);tree.add(crown)}
+ const appleMat=new THREE.MeshStandardMaterial({color:0xc94332,roughness:.5});
+ for(const [ax,ay,az] of [[-.82,3.25,.3],[.78,3.45,.15],[.15,4.05,.68],[-.25,3.75,-.72],[.65,2.95,-.55]]){
+  const apple=new THREE.Mesh(new THREE.SphereGeometry(.19,10,9),appleMat);apple.position.set(ax,ay,az);fruitGroup.add(apple);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.018,.025,.13,5),makeMat(0x59432d));stem.position.set(ax,ay+.2,az);fruitGroup.add(stem);
+ }
+ tree.position.set(x,y,z);fruitGroup.position.set(x,y,z);scene.add(tree,fruitGroup);const fruitCollider=addCircleCollider(x,z,.72);
+ const fruitItem={type:'fruit',mesh:fruitGroup,ring:null,x,z,resource:true,collider:fruitCollider,baseY:fruitGroup.position.y,fruitTreeMesh:tree};items.push(fruitItem);
+ harvestableFruitTrees.push({tree,fruitGroup,item:fruitItem,x,z,collider:fruitCollider,regrowAt:0});
+}
+function addPalmTree(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const y=terrainHeight(x,z),palm=new THREE.Group();
+ const trunkMat=makeMat(0x80603b),leafMat=makeMat(0x34784b),coconutMat=makeMat(0x79502d);
+ // Slightly leaning segmented trunk and broad arching fronds make the source clearly identifiable.
+ for(let i=0;i<5;i++){const seg=new THREE.Mesh(new THREE.CylinderGeometry(.22-i*.018,.28-i*.018,.82,7),trunkMat);seg.position.set(i*.07,.41+i*.82,0);seg.rotation.z=-.075;palm.add(seg)}
+ const top=new THREE.Vector3(.35,4.15,0);
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;const frond=new THREE.Group();
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.045,.075,3.3,6),makeMat(0x8b9a51));stem.rotation.z=Math.PI/2;stem.position.x=1.55;frond.add(stem);
+  for(let j=0;j<9;j++){const t=.35+j*.31;for(const side of [-1,1]){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.12,.82,4),leafMat);leaf.position.set(t-1.25,-.12-Math.abs(j-4)*.045,side*.25);leaf.rotation.z=side*.55;leaf.rotation.x=side*.25;frond.add(leaf)}}
+  frond.position.copy(top);frond.rotation.y=a;frond.rotation.z=-.16;palm.add(frond);
+ }
+ const cluster=new THREE.Group();
+ // Ripe coconuts: individually oval, slightly tapered fruits hanging beneath the crown.
+ // Avoid the previous four-ball ring, which looked like a mechanical bead cluster.
+ const huskMat=new THREE.MeshStandardMaterial({color:0x765039,roughness:.94});
+ const huskLight=new THREE.MeshStandardMaterial({color:0x92704b,roughness:1});
+ const coconutSpecs=[
+  [-.02,3.82,.02,.86,-.28],
+  [.34,3.70,.16,1.02,.32],
+  [.12,3.58,-.25,.92,-.12]
+ ];
+ for(let i=0;i<coconutSpecs.length;i++){
+  const [cx,cy,cz,sc,tilt]=coconutSpecs[i];
+  const fruit=new THREE.Mesh(new THREE.SphereGeometry(.22,14,12),i===1?huskLight:huskMat);
+  fruit.scale.set(.88*sc,1.28*sc,.9*sc);
+  fruit.position.set(cx,cy,cz);fruit.rotation.z=tilt;fruit.rotation.x=(i-1)*.12;
+  cluster.add(fruit);
+  // Small pointed end and a short stem make each fruit read as a coconut, not a round ball.
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.055,.12,8),huskMat);
+  tip.position.set(cx,cy-.27*sc,cz);tip.rotation.z=Math.PI;
+  cluster.add(tip);
+ }
+ palm.position.set(x,y,z);cluster.position.set(x,y,z);scene.add(palm,cluster);const palmCollider=addCircleCollider(x,z,.72);
+ const coconutItem={type:'coconut',mesh:cluster,ring:null,x,z,resource:true,collider:palmCollider,baseY:cluster.position.y,palmMesh:palm};items.push(coconutItem);harvestablePalms.push({palm,cluster,item:coconutItem,x,z,collider:palmCollider,regrowAt:0});
+}
+function addMushroomPatch(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const g=new THREE.Group(),stemMat=makeMat(0xd9cfad),capMat=makeMat(0x9a6042),spotMat=makeMat(0xe8d7b5);
+ for(let i=0;i<7;i++){const a=i*2.4,r=.12+(i%3)*.18,h=.28+(i%3)*.12,cx=Math.cos(a)*r,cz=Math.sin(a)*r;
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.045,.065,h,7),stemMat);stem.position.set(cx,h/2,cz);g.add(stem);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.17+(i%3)*.025,9,7),capMat);cap.scale.y=.48;cap.position.set(cx,h,cz);g.add(cap);
+  if(i%2===0){const dot=new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),spotMat);dot.position.set(cx+.07,h+.035,cz);g.add(dot)}
+ }
+ g.position.set(x,terrainHeight(x,z),z);scene.add(g);items.push({type:'mushroom',mesh:g,ring:null,x,z,resource:true,baseY:g.position.y});
+}
+function addFern(x,z,scale=1){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),leafMat=makeMat(0x477c45);
+ for(let i=0;i<7;i++){const a=i*Math.PI*2/7,leaf=new THREE.Mesh(new THREE.ConeGeometry(.16*scale,1.15*scale,5),leafMat);leaf.position.set(Math.cos(a)*.34*scale,.48*scale,Math.sin(a)*.34*scale);leaf.rotation.z=Math.cos(a)*.75;leaf.rotation.x=Math.sin(a)*.75;g.add(leaf)}
+ g.position.set(x,terrainHeight(x,z),z);scene.add(g);
+}
+function addFallenLog(x,z,rot=0){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),log=new THREE.Mesh(new THREE.CylinderGeometry(.22,.27,2.8,8),makeMat(0x63452d));log.rotation.z=Math.PI/2;log.rotation.y=rot;log.position.y=.25;g.add(log);
+ for(let i=0;i<3;i++){const moss=new THREE.Mesh(new THREE.SphereGeometry(.22,7,6),makeMat(0x426b3e));moss.scale.set(1,.35,1);moss.position.set((i-1)*.65,.43,.08);g.add(moss)}
+ g.position.set(x,terrainHeight(x,z),z);scene.add(g);addCircleCollider(x,z,1.15);
+}
+function addFenceLine(x,z,length,angle=0){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),woodMat=makeMat(0x68503a);
+ for(let i=0;i<=length;i+=1.8){const post=new THREE.Mesh(new THREE.BoxGeometry(.16,1.25,.16),woodMat);post.position.set(i-length/2,.62,0);g.add(post)}
+ for(const y of [.42,.92]){const rail=new THREE.Mesh(new THREE.BoxGeometry(length, .13,.13),woodMat);rail.position.set(0,y,0);g.add(rail)}
+ g.position.set(x,terrainHeight(x,z),z);g.rotation.y=angle;scene.add(g);
+ // Collision follows each fence segment, with a conservative axis-aligned footprint.
+ addBoxCollider(x,z,length/2,.2);
+}
+function addWreck(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),bodyMat=makeMat(0x59645f),glassMat=new THREE.MeshStandardMaterial({color:0x263f45,metalness:.25,roughness:.35});
+ const body=new THREE.Mesh(new THREE.BoxGeometry(3.7,1.05,1.8),bodyMat);body.position.y=.78;g.add(body);
+ const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.8,.85,1.55),glassMat);cabin.position.set(-.25,1.65,0);g.add(cabin);
+ for(const xx of [-1.25,1.25])for(const zz of [-.98,.98]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.22,10),makeMat(0x202321));wheel.rotation.x=Math.PI/2;wheel.position.set(xx,.43,zz);g.add(wheel)}
+ g.position.set(x,terrainHeight(x,z),z);g.rotation.y=rnd(-.4,.4);scene.add(g);addBoxCollider(x,z,1.9,1.05);
+}
+function addBambooGrove(cx,cz,count=24){
+ const green=[0x315f3e,0x3e7447,0x507f4a];
+ for(let i=0;i<count;i++){
+  const a=rnd(0,Math.PI*2),r=rnd(2,13),x=(cx+Math.cos(a)*r)*WORLD_SCALE,z=(cz+Math.sin(a)*r)*WORLD_SCALE,y=terrainHeight(x,z),h=rnd(5.5,9.5),g=new THREE.Group();
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.09,.14,h,7),makeMat(green[i%3]));stem.position.y=h/2;g.add(stem);
+  for(let k=1;k<5;k++){const ring=new THREE.Mesh(new THREE.TorusGeometry(.105+k*.004,.025,5,9),makeMat(0x9a9b62));ring.rotation.x=Math.PI/2;ring.position.y=h*k/5;g.add(ring)}
+  for(let k=0;k<4;k++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.12,1.25,5),makeMat(0x39764a));leaf.position.set(Math.cos(k*1.7)*.45,h*.78+Math.sin(k)*.22,Math.sin(k*1.7)*.45);leaf.rotation.z=.8;leaf.rotation.x=.45;g.add(leaf)}
+  g.position.set(x,y,z);scene.add(g);addCircleCollider(x,z,.22);
+ }
+}
+function addReedPatch(cx,cz,count=18){
+ for(let i=0;i<count;i++){const a=rnd(0,Math.PI*2),r=rnd(.2,5),x=(cx+Math.cos(a)*r)*WORLD_SCALE,z=(cz+Math.sin(a)*r)*WORLD_SCALE,g=new THREE.Group();for(let j=0;j<3;j++){const h=rnd(1.2,2.1),blade=new THREE.Mesh(new THREE.ConeGeometry(.07,h,5),makeMat(j%2?0x71894a:0x879451));blade.position.set((j-1)*.13,h/2,0);blade.rotation.z=(j-1)*.18;g.add(blade)}g.position.set(x,terrainHeight(x,z),z);scene.add(g)}
+}
+function addFlowerPatch(cx,cz,count=28){
+ const petalMats=[0xd7c36c,0xd68d9b,0xe8e0c8,0x9e9bd2];
+ for(let i=0;i<count;i++){const a=rnd(0,Math.PI*2),r=Math.sqrt(Math.random())*7,x=(cx+Math.cos(a)*r)*WORLD_SCALE,z=(cz+Math.sin(a)*r)*WORLD_SCALE,g=new THREE.Group();const stem=new THREE.Mesh(new THREE.CylinderGeometry(.018,.025,.28,5),makeMat(0x477344));stem.position.y=.14;g.add(stem);for(let j=0;j<5;j++){const petal=new THREE.Mesh(new THREE.SphereGeometry(.065,6,5),makeMat(petalMats[i%4]));petal.position.set(Math.cos(j*1.256)*.09,.32,Math.sin(j*1.256)*.09);g.add(petal)}const center=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),makeMat(0xe9c65f));center.position.y=.34;g.add(center);g.position.set(x,terrainHeight(x,z),z);scene.add(g)}
+}
+function addRuinWall(x,z,length,angle=0){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),mat=makeMat(0x77776a);for(let i=0;i<Math.ceil(length/2);i++){const h=rnd(1.1,2.3),block=new THREE.Mesh(new THREE.BoxGeometry(1.9,h,.55),mat);block.position.set(i*2-length/2,h/2,0);g.add(block)}g.position.set(x,terrainHeight(x,z),z);g.rotation.y=angle;scene.add(g);addBoxCollider(x,z,length/2,.38);
+}
+function addBarrel(x,z,color=0x526c59){x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,1.05,10),makeMat(color));body.position.y=.53;g.add(body);for(const y of [.2,.82]){const hoop=new THREE.Mesh(new THREE.TorusGeometry(.435,.035,5,12),makeMat(0x8b9186));hoop.rotation.x=Math.PI/2;hoop.position.y=y;g.add(hoop)}g.position.set(x,terrainHeight(x,z),z);scene.add(g);addCircleCollider(x,z,.52)}
+function addCabinDetail(x,z){
+ // Exterior clutter gives abandoned buildings a lived-in silhouette without blocking doors.
+ addBarrel(x-3.8,z+2,0x526b5c);addBarrel(x+3.6,z-2,0x766044);
+ const crate=new THREE.Mesh(new THREE.BoxGeometry(.9,.75,.9),makeMat(0x8a6844));crate.position.set(x*WORLD_SCALE+2,terrainHeight(x*WORLD_SCALE+2,z*WORLD_SCALE)+.38,z*WORLD_SCALE);scene.add(crate);addBoxCollider(x*WORLD_SCALE+2,z*WORLD_SCALE,.48,.48);
+}
+function makeZombie(x,z){
+ x*=WORLD_SCALE;z*=WORLD_SCALE;
+ const group=new THREE.Group(),variant=Math.random()<.24?'runner':(Math.random()<.28?'brute':'wanderer');
+ const skin=makeMat(variant==='runner'?0x8b9d72:variant==='brute'?0x718078:0x6d8d70),dark=makeMat(0x283c35);
+ const body=new THREE.Mesh(new THREE.BoxGeometry(variant==='brute'?.98:.75,variant==='brute'?1.28:1.1,.42),makeMat(variant==='runner'?0x526f55:variant==='brute'?0x665b50:0x526b63));body.position.y=variant==='brute'?1.32:1.25;group.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(variant==='brute'?.36:.32,10,8),skin);head.position.y=variant==='brute'?2.18:2.05;group.add(head);
+ if(variant==='runner')group.scale.set(.88,.94,.88);if(variant==='brute')group.scale.set(1.22,1.12,1.22);
+ for(let side of [-1,1]){const arm=new THREE.Mesh(new THREE.BoxGeometry(.2,.95,.2),skin);arm.position.set(side*.52,1.35,.18);arm.rotation.x=-.55;group.add(arm);const leg=new THREE.Mesh(new THREE.BoxGeometry(.25,.85,.28),dark);leg.position.set(side*.22,.42,0);group.add(leg)}
+ group.position.set(x,terrainHeight(x,z),z);scene.add(group);zombies.push({group,x,z,homeX:x,homeZ:z,stun:0,phase:rnd(0,6),variant,flash:0,aiState:'patrol',patrolTimer:0});
+}
+function init(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x91b6bd);scene.fog=new THREE.Fog(0x91b6bd,125,410);
+ camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,900);flashlight=new THREE.SpotLight(0xe3f3d9,0,48,Math.PI/5,.62,1);flashlight.position.set(0,0,0);flashlight.target.position.set(0,0,-10);flashlightFill=new THREE.PointLight(0xe3f3d9,0,9,1.6);scene.add(flashlight,flashlight.target,flashlightFill);
+ createFirstPersonHands();
+ const touchDevice=matchMedia('(pointer:coarse)').matches||innerWidth<760;renderer=new THREE.WebGLRenderer({antialias:!touchDevice,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,touchDevice?1.2:1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('game').appendChild(renderer.domElement);
+ renderer.domElement.addEventListener('click',()=>{if(started&&!ended&&!locked&&matchMedia('(pointer:fine)').matches&&$('craftPanel').style.display!=='block'&&!$('backpackPanel').classList.contains('open')&&!$('settingsPanel').classList.contains('open'))safeRequestPointerLock()});
+ scene.add(new THREE.HemisphereLight(0xc9e9ff,0x33412c,1.45));
+ const sun=new THREE.DirectionalLight(0xffedc8,2.1);sun.position.set(-35,65,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+ const geo=new THREE.PlaneGeometry(520,520,128,128);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position;
+ for(let i=0;i<pos.count;i++){let x=pos.getX(i),z=pos.getZ(i);pos.setY(i,terrainHeight(x,z));}geo.computeVertexNormals();
+ const ground=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x547c4c,roughness:1}));ground.receiveShadow=true;scene.add(ground);
+ // Water ring and sandy shoreline
+ const ocean=new THREE.Mesh(new THREE.PlaneGeometry(1500,1500),new THREE.MeshStandardMaterial({color:0x286d83,roughness:.35,metalness:.05}));ocean.rotation.x=-Math.PI/2;ocean.position.y=-3.45;scene.add(ocean);
+ const foam=new THREE.Mesh(new THREE.TorusGeometry(241,.7,5,180),new THREE.MeshStandardMaterial({color:0xc9e3d8,transparent:true,opacity:.48,roughness:.3}));foam.rotation.x=Math.PI/2;foam.position.y=-3.05;scene.add(foam);
+ for(let i=0;i<150;i++){let a=rnd(0,Math.PI*2),r=Math.sqrt(Math.random())*69,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)>5||Math.abs(z)>5)addTree(x,z,rnd(.72,1.42))}
+ for(let i=0;i<62;i++){let a=rnd(0,Math.PI*2),r=rnd(8,68);addRock(Math.cos(a)*r,Math.sin(a)*r,rnd(.6,1.45))}
+ // Dense scenery clusters make clearings, forest edges and rocky slopes feel distinct.
+ for(let i=0;i<90;i++){let a=rnd(0,Math.PI*2),r=rnd(10,69);addFern(Math.cos(a)*r,Math.sin(a)*r,rnd(.65,1.25))}
+ // Understory fills the large island without turning every clearing into a resource field.
+ for(let i=0;i<120;i++){let a=rnd(0,Math.PI*2),r=rnd(18,67),x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.hypot(x,z)>18)addFern(x,z,rnd(.45,.9))}
+ for(const [x,z] of [[-82,12],[-70,68],[74,60],[92,-28],[-12,86],[30,-88]])addFlowerPatch(x,z,24);
+ for(const [x,z] of [[-82,-22],[78,32],[8,92]])addBambooGrove(x,z,28);
+ for(const [x,z] of [[-96,18],[-82,22],[86,38],[92,34]])addReedPatch(x,z,20);
+ for(let i=0;i<18;i++){let a=rnd(0,Math.PI*2),r=rnd(18,66);addFallenLog(Math.cos(a)*r,Math.sin(a)*r,rnd(0,Math.PI))}
+ for(let i=0;i<52;i++){let a=rnd(0,Math.PI*2),r=rnd(42,67),x=Math.cos(a)*r,z=Math.sin(a)*r;addTree(x,z,rnd(.55,.9))}
+ // Outer forest belt: fills the newly expanded coastline approach with distinct groves.
+ for(let i=0;i<76;i++){let a=rnd(0,Math.PI*2),r=rnd(73,101),x=Math.cos(a)*r,z=Math.sin(a)*r;addTree(x,z,rnd(.62,1.12))}
+ for(let i=0;i<52;i++){let a=rnd(0,Math.PI*2),r=rnd(72,104);addFern(Math.cos(a)*r,Math.sin(a)*r,rnd(.6,1.15))}
+ for(let i=0;i<14;i++){let a=rnd(0,Math.PI*2),r=rnd(76,100);addRock(Math.cos(a)*r,Math.sin(a)*r,rnd(.55,1.05))}
+ for(const [x,z] of [[-96,72],[94,-76],[104,42],[-104,-62],[12,-104]])addFlowerPatch(x,z,22);
+ for(const [x,z] of [[-104,44],[102,-34],[38,104]])addBambooGrove(x,z,22);
+ for(const [x,z] of [[-88,-44],[86,-62],[96,12],[-12,102],[44,88],[-102,4]])addRuinWall(x,z,rnd(7,13),rnd(0,Math.PI));
+ for(let i=0;i<26;i++){let a=rnd(0,Math.PI*2),r=rnd(7,59);addItem(['wood','wood','cloth'][i%3],Math.cos(a)*r,Math.sin(a)*r)}
+ // Natural food sources: berry shrubs on the forest floor and fruit-bearing trees
+ for(let i=0;i<16;i++){let a=rnd(0,Math.PI*2),r=rnd(9,55);addBerryBush(Math.cos(a)*r,Math.sin(a)*r)}
+ for(const [fx,fz] of [[-18,13],[14,29],[43,-8],[-39,-24],[61,46],[-67,-43]])addTreeFruit(fx,fz)
+ // Tropical shoreline ecology: coconuts remain visibly attached to palm crowns until collected.
+ for(const [px,pz] of [[-54,-18],[-59,8],[-46,38],[52,-30],[60,-4],[48,43],[5,-57],[-24,-52],[88,18],[-91,54],[76,-83],[-72,-91]])addPalmTree(px,pz);
+ // Edible-looking forest mushroom patches are placed in clearings, not as floating pickups.
+ for(let i=0;i<13;i++){let a=rnd(0,Math.PI*2),r=rnd(12,49);addMushroomPatch(Math.cos(a)*r,Math.sin(a)*r)}
+ addStream();
+ for(let i=0;i<26;i++){let a=rnd(0,Math.PI*2),r=rnd(8,59);addFiberPlant(Math.cos(a)*r,Math.sin(a)*r,'fiber')}
+ for(let i=0;i<14;i++){let a=rnd(0,Math.PI*2),r=rnd(10,53);addFiberPlant(Math.cos(a)*r,Math.sin(a)*r,'herb')}
+ // Exploreable locations: a small town, clinic and research outpost
+ function landmark(x,z,w,d,h,color,label){
+  x*=WORLD_SCALE;z*=WORLD_SCALE;const g=new THREE.Group(),wallMat=makeMat(color),roofMat=makeMat(0x35433d),doorMat=makeMat(0x30291f),glassMat=new THREE.MeshStandardMaterial({color:0x8ed0d0,emissive:0x234b50});
+  const t=.32,doorW=1.55,frontZ=d/2;
+  // Four walls are separate meshes; the front wall has a real doorway.
+  const wall=(ww,hh,dd,px,py,pz)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(ww,hh,dd),wallMat);m.position.set(px,py,pz);g.add(m)};
+  wall(w,h,t,0,h/2,-d/2);wall(t,h,d, -w/2,h/2,0);wall(t,h,d,w/2,h/2,0);
+  wall((w-doorW)/2,h,t,-(w+doorW)/4,h/2,frontZ);wall((w-doorW)/2,h,t,(w+doorW)/4,h/2,frontZ);
+  const lintel=new THREE.Mesh(new THREE.BoxGeometry(doorW,.35,t),wallMat);lintel.position.set(0,h-.175,frontZ);g.add(lintel);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(doorW-.12,2.05,.12),doorMat);door.position.set(-doorW/2-.48,1.02,frontZ-.55);door.rotation.y=Math.PI/2;g.add(door);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(w+1,.38,d+1),roofMat);roof.position.y=h+.19;g.add(roof);
+  for(let k=0;k<2;k++){const win=new THREE.Mesh(new THREE.BoxGeometry(.85,.72,.07),glassMat);win.position.set((k?1:-1)*w*.25,h*.62,frontZ+.04);g.add(win)}
+  const sign=new THREE.Mesh(new THREE.BoxGeometry(1.25,.32,.12),makeMat(0xc6b77c));sign.position.set(0,h-.58,frontZ+.08);g.add(sign);
+  const floor=new THREE.Mesh(new THREE.BoxGeometry(w-.55,.12,d-.55),makeMat(0x625747));floor.position.set(0,.08,0);g.add(floor);
+  const counter=new THREE.Mesh(new THREE.BoxGeometry(Math.min(2.4,w*.32),.95,.65),makeMat(0x594632));counter.position.set(-w*.22,.53,-d*.18);g.add(counter);
+  const shelf=new THREE.Mesh(new THREE.BoxGeometry(.48,1.65,Math.min(2.5,d*.38)),makeMat(0x554735));shelf.position.set(w*.34,.86,-d*.16);g.add(shelf);
+  addBoxCollider(x-w*.22,z-d*.18,Math.min(2.4,w*.32)/2+.08,.4);
+  addBoxCollider(x+w*.34,z-d*.16,.32,Math.min(2.5,d*.38)/2+.08);
+  g.position.set(x,terrainHeight(x,z),z);scene.add(g);poi.push({x,z,label,group:g,w,d});
+  // Furnishings and searchable drawers are placed inside the walk-in shell.
+  const insideY=terrainHeight(x,z)+.13;
+  for(const [sx,sz] of [[-w*.25,-d*.22],[w*.25,-d*.22]]){const cabinet=new THREE.Group();const base=new THREE.Mesh(new THREE.BoxGeometry(1.05,1.05,.62),makeMat(0x604832));base.position.y=.53;cabinet.add(base);const top=new THREE.Mesh(new THREE.BoxGeometry(1.1,.12,.68),makeMat(0x92714b));top.position.y=1.1;cabinet.add(top);cabinet.position.set(x+sx,insideY,z+sz);scene.add(cabinet);}
+  const drawerX=x+(label.includes('警務')?-.4:label.includes('診療')?.45:label.includes('研究')?-.35:.25),drawerZ=z-.25;
+  const drawer=new THREE.Group(),cab=new THREE.Mesh(new THREE.BoxGeometry(.9,.82,.65),makeMat(0x70553a));cab.position.y=.41;drawer.add(cab);const face=new THREE.Mesh(new THREE.BoxGeometry(.72,.22,.045),makeMat(0x9a7950));face.position.set(0,.58,.35);drawer.add(face);drawer.position.set(drawerX,insideY,drawerZ);scene.add(drawer);
+  const lootType=label.includes('警務')?'metal':label.includes('診療')?'medical':label.includes('研究')?'research':label.includes('倉庫')?'supply':'general';
+  interiorContainers.push({x:drawerX,z:drawerZ,group:drawer,opened:false,lootType,label:label+'抽屜',drawer:face});
+  // AABB colliders on the three closed sides and two front wall sections; the doorway stays open.
+  addBoxCollider(x,z-d/2,w/2,t/2);addBoxCollider(x-w/2,z,t/2,d/2);addBoxCollider(x+w/2,z,t/2,d/2);
+  addBoxCollider(x-(w+doorW)/4,z+d/2,(w-doorW)/4,t/2);addBoxCollider(x+(w+doorW)/4,z+d/2,(w-doorW)/4,t/2);
+ }
+ landmark(27,-18,10,8,5,0x777b70,'廢棄小鎮');landmark(-31,24,9,8,4.5,0x9a8f7c,'島嶼診療所');landmark(38,30,11,9,5,0x657b78,'研究觀測站');landmark(-58,-48,8,7,4,0x77715f,'林間巡守站');landmark(67,-57,9,7,4.5,0x6d7775,'海岸通訊站');
+ landmark(-78,18,12,9,4.8,0x77705f,'廢棄警務站');landmark(82,38,13,10,5.2,0x8b765d,'海岸倉庫');landmark(6,88,10,8,4.4,0x6e755c,'山麓伐木屋');landmark(-92,-36,11,8,4.6,0x687a70,'沼澤研究棚');
+ addCabinDetail(-78,18);addCabinDetail(82,38);addCabinDetail(6,88);
+ // Accessible basalt cave in the north-west highlands. The entrance is open; side and rear walls block passage.
+ const caveX=-166,caveZ=132,cave=new THREE.Group(),caveRock=makeMat(0x454b49),caveDark=new THREE.MeshStandardMaterial({color:0x101918,roughness:1});
+ const leftBoulder=new THREE.Mesh(new THREE.DodecahedronGeometry(2.7,1),caveRock);leftBoulder.scale.set(.8,1.35,1.2);leftBoulder.position.set(-2.35,2.05,0);cave.add(leftBoulder);
+ const rightBoulder=new THREE.Mesh(new THREE.DodecahedronGeometry(2.8,1),caveRock);rightBoulder.scale.set(.85,1.3,1.25);rightBoulder.position.set(2.35,2.0,-.2);cave.add(rightBoulder);
+ const roofRock=new THREE.Mesh(new THREE.DodecahedronGeometry(3.1,1),caveRock);roofRock.scale.set(1.25,.62,1.45);roofRock.position.set(0,4.25,-.3);cave.add(roofRock);
+ const backWall=new THREE.Mesh(new THREE.BoxGeometry(5.2,5.2,.8),caveRock);backWall.position.set(0,2.55,-5.1);cave.add(backWall);
+ const innerDark=new THREE.Mesh(new THREE.PlaneGeometry(4.4,3.6),caveDark);innerDark.position.set(0,2.25,-4.62);cave.add(innerDark);
+ const floor=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.4,.22,10),makeMat(0x4b5148));floor.scale.z=1.8;floor.position.set(0,-.08,-1.4);cave.add(floor);
+ cave.position.set(caveX,terrainHeight(caveX,caveZ),caveZ);scene.add(cave);
+ addBoxCollider(caveX-2.45,caveZ-1.5,.45,3.4);addBoxCollider(caveX+2.45,caveZ-1.5,.45,3.4);addBoxCollider(caveX,caveZ-5.05,2.7,.5);
+ const caveGlow=new THREE.PointLight(0x8bb8a2,.75,17);caveGlow.position.set(caveX,terrainHeight(caveX,caveZ)+2.1,caveZ-2.4);scene.add(caveGlow);
+ for(const [ox,oz] of [[-1.15,-1.2],[1.1,-2.8],[0,-4]]){const ore=new THREE.Group();for(let k=0;k<3;k++){const crystal=new THREE.Mesh(new THREE.OctahedronGeometry(.38+k*.08,0),makeMat(k===1?0x6f9ca0:0x58777d));crystal.position.set((k-1)*.24,.35+k*.12,(k%2)*.18);ore.add(crystal)}ore.position.set(caveX+ox,terrainHeight(caveX+ox,caveZ+oz)+.1,caveZ+oz);scene.add(ore);items.push({type:'ore',mesh:ore,ring:null,x:caveX+ox,z:caveZ+oz,resource:true,baseY:ore.position.y})}
+ addFenceLine(-82,12,17,.5);addFenceLine(88,44,18,1.2);addFenceLine(0,94,14,.1);
+ addWreck(-73,25);addWreck(76,32);addWreck(11,82);
+ for(const [x,z] of [[-88,26],[-70,9],[75,45],[89,30],[2,98],[-96,-28]])addBarrel(x,z);
+ // Ruined settlement details: wrecked vehicles, broken perimeter fencing and a watch platform.
+ addWreck(31,-22);addWreck(22,-13);addFenceLine(27,-25,13,.15);addFenceLine(40,-17,10,Math.PI/2);
+ addFenceLine(-58,-53,10,.2);addFenceLine(-51,-48,8,Math.PI/2);
+ const tower=new THREE.Group(),towerMat=makeMat(0x66513a);for(const [tx,tz] of [[-1.5,-1.5],[1.5,-1.5],[-1.5,1.5],[1.5,1.5]]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,5,.18),towerMat);leg.position.set(tx,2.5,tz);tower.add(leg)}const deck=new THREE.Mesh(new THREE.BoxGeometry(4, .25,4),makeMat(0x80613d));deck.position.y=4.1;tower.add(deck);const ladder=new THREE.Mesh(new THREE.BoxGeometry(.12,3.8,.12),makeMat(0x9a8a68));ladder.position.set(0,2,1.7);tower.add(ladder);tower.position.set(-58*WORLD_SCALE,terrainHeight(-58*WORLD_SCALE,-48*WORLD_SCALE),-48*WORLD_SCALE);scene.add(tower);addBoxCollider(-58*WORLD_SCALE,-48*WORLD_SCALE,1.8,1.8);
+ // Supply crates scattered around landmarks
+ for(const [bx,bz] of [[25,-11],[-25,20],[34,25],[8,42],[-42,-12]]){const x=bx*WORLD_SCALE,z=bz*WORLD_SCALE;const box=new THREE.Mesh(new THREE.BoxGeometry(1.25,.9,1),makeMat(0x9a7040));box.position.set(x,terrainHeight(x,z)+.45,z);scene.add(box);const mark=new THREE.Mesh(new THREE.BoxGeometry(.12,.94,1.03),makeMat(0xd6b46a));mark.position.set(x,terrainHeight(x,z)+.45,z);scene.add(mark);items.push({type:'crate',mesh:box,ring:null,x,z,opened:false})}
+ // small abandoned shelter
+ const hut=new THREE.Group(),wall=makeMat(0x70553a),roof=makeMat(0x39483c);const hw=6,hd=5,doorW=1.35;
+ const part=(w,h,d,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),wall);m.position.set(x,y,z);hut.add(m)};
+ part(hw,2.5,.3,0,1.25,-hd/2);part(.3,2.5,hd,-hw/2,1.25,0);part(.3,2.5,hd,hw/2,1.25,0);part((hw-doorW)/2,2.5,.3,-(hw+doorW)/4,1.25,hd/2);part((hw-doorW)/2,2.5,.3,(hw+doorW)/4,1.25,hd/2);
+ let roofM=new THREE.Mesh(new THREE.ConeGeometry(4.7,2.6,4),roof);roofM.position.y=3.8;roofM.rotation.y=Math.PI/4;hut.add(roofM);
+ const door=new THREE.Mesh(new THREE.BoxGeometry(1.1,2,.12),makeMat(0x30291f));door.position.set(-doorW/2-.48,1.05,hd/2-.48);door.rotation.y=Math.PI/2;hut.add(door);hut.position.set(-20,terrainHeight(-20,-16),-16);scene.add(hut);
+ addBoxCollider(-20,-16-hd/2,hw/2,.18);addBoxCollider(-20-hw/2,-16,.18,hd/2);addBoxCollider(-20+hw/2,-16,.18,hd/2);addBoxCollider(-20-(hw+doorW)/4,-16+hd/2,(hw-doorW)/4,.18);addBoxCollider(-20+(hw+doorW)/4,-16+hd/2,(hw-doorW)/4,.18);
+ player={x:0,z:0,vel:new THREE.Vector3()};camera.position.set(0,terrainHeight(0,0)+1.7,0);
+ for(let i=0;i<30;i++){let a=rnd(0,Math.PI*2),r=rnd(34,94);makeZombie(Math.cos(a)*r,Math.sin(a)*r)}
+ clock=new THREE.Clock();window.addEventListener('resize',resize);animate();
+}
+function resize(){if(!camera)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);const touchDevice=matchMedia('(pointer:coarse)').matches||innerWidth<760;renderer.setPixelRatio(Math.min(devicePixelRatio,touchDevice?1.2:1.7))}
+function start(){
+ if(started)return;
+ if(!renderer||!camera||!clock||!player){showMsg('遊戲場景尚未準備完成，請重新整理頁面再試一次。');return;}
+ started=true;$('start').style.display='none';renderer.domElement.tabIndex=0;renderer.domElement.focus({preventScroll:true});
+ if(matchMedia('(pointer:fine)').matches)safeRequestPointerLock();
+ clock.getDelta();showMsg('生存開始！先收集附近的物資。');
+}
+$('startBtn').onclick=start;
+window.addEventListener('pagehide',()=>{if(started&&!ended)saveGame(true)});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started&&!ended)saveGame(true);if(document.visibilityState==='visible'&&clock)clock.getDelta();});
+$('restartBtn').onclick=()=>location.reload();
+document.addEventListener('pointerlockchange',()=>{locked=!!renderer&&document.pointerLockElement===renderer.domElement;if(locked)fallbackLookActive=false;});
+// Pointer lock is optional: sandboxed previews may forbid it. Never treat that denial as a game error.
+function safeRequestPointerLock(){
+ if(!renderer?.domElement?.requestPointerLock)return false;
+ try{const result=renderer.domElement.requestPointerLock();if(result&&typeof result.catch==='function')result.catch(()=>{showMsg('目前瀏覽環境不允許鎖定滑鼠；按住滑鼠左鍵拖曳畫面即可轉動視角。');});return true;}
+ catch(err){showMsg('目前瀏覽環境不允許鎖定滑鼠；按住滑鼠左鍵拖曳畫面即可轉動視角。');return false;}
+}
+let fallbackLookActive=false,fallbackLastX=0,fallbackLastY=0;
+document.addEventListener('pointerdown',e=>{if(e.target!==renderer?.domElement||e.pointerType!=='mouse'||!started||ended||locked)return;if($('backpackPanel').classList.contains('open')||$('craftPanel').style.display==='block'||$('settingsPanel').classList.contains('open'))return;fallbackLookActive=true;fallbackLastX=e.clientX;fallbackLastY=e.clientY;});
+window.addEventListener('pointerup',()=>{fallbackLookActive=false;});
+window.addEventListener('pointercancel',()=>{fallbackLookActive=false;});
+window.addEventListener('wheel',e=>{if(!started||ended||!matchMedia('(pointer:fine)').matches||$('backpackPanel').classList.contains('open')||$('craftPanel').style.display==='block')return;e.preventDefault();const dir=e.deltaY>0?1:-1;selectHotbarSlot((selectedSlot+dir+9)%9);},{passive:false});
+document.addEventListener('mousedown',e=>{if(e.button!==0||!started||ended||e.target!==renderer?.domElement)return;if($('backpackPanel').classList.contains('open')||$('craftPanel').style.display==='block'||$('settingsPanel').classList.contains('open'))return;useSelectedQuick()});
+document.addEventListener('mousemove',e=>{if(ended||!started)return;let dx=0,dy=0;if(locked){dx=e.movementX;dy=e.movementY;}else if(fallbackLookActive){dx=e.clientX-fallbackLastX;dy=e.clientY-fallbackLastY;fallbackLastX=e.clientX;fallbackLastY=e.clientY;}else return;yaw-=dx*.0022;pitch-=dy*.0022;pitch=Math.max(-1.35,Math.min(1.35,pitch))});
+document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;const bagBusy=inventoryDragging||$('backpackPanel')?.classList.contains('open');if(bagBusy&&['KeyW','KeyA','KeyS','KeyD','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();keys[e.code]=false;return;}if(e.code==='KeyR'&&!e.repeat){if(started&&!ended){e.preventDefault();saveGame(false);}return;}if(['KeyW','KeyA','KeyS','KeyD','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys[e.code]=true;if(!started||ended)return;if(e.code==='KeyE')useNearby();if(e.code==='KeyQ')dropSelected();if(e.code==='KeyC')toggleCraft();if(e.code==='KeyF')toggleBackpack();if(e.code==='ControlLeft'||e.code==='ControlRight'){if(document.pointerLockElement)document.exitPointerLock();}if(/^Digit[1-9]$/.test(e.code))selectHotbarSlot(Number(e.code.slice(-1))-1);if(e.code==='Escape'&&$('backpackPanel')?.classList.contains('open'))closeBackpack();if(e.code==='Escape'&&$('craftPanel')?.style.display==='block')toggleCraft(false);});
+document.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{keys={};inventoryDragging=false;inventoryDropDone=false;pendingBackpackItem=null;pendingHotbarSourceIndex=-1;});
+// 2.16.2 performance and input recovery: capture movement keys at window level so pointer-lock loss
+// or focus changes do not silently disable keyboard movement.
+window.addEventListener('keydown',e=>{if(!started||ended)return;if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;if(inventoryDragging||$('backpackPanel')?.classList.contains('open')){if(['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)){keys[e.code]=false;e.preventDefault();}return;}if(['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)){keys[e.code]=true;if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();}},true);
+window.addEventListener('keyup',e=>{keys[e.code]=false;},true);
+window.addEventListener('blur',()=>{for(const k of ['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'])keys[k]=false;mobileRun=false;});
+
+// Canvas click handler is attached inside init(), after the WebGL renderer exists.
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+document.querySelector('[data-action=collect]').onclick=useNearby;document.querySelector('[data-action=use]').onclick=useSelectedQuick;document.querySelector('[data-action=drop]').onclick=dropSelected;
+const runBtn=document.querySelector('[data-action=run]');runBtn.addEventListener('pointerdown',e=>{e.preventDefault();mobileRun=true;runBtn.setPointerCapture?.(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>runBtn.addEventListener(ev,()=>mobileRun=false));
+document.querySelector('[data-action=crouch]').onclick=toggleCrouch;
+// Analog virtual joystick: pointer capture keeps movement active even if the thumb drifts outside the base.
+const moveStick=$('moveStick'),stickKnob=$('stickKnob');
+function setStick(e){const r=moveStick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,limit=r.width*.34,len=Math.hypot(dx,dy),scale=len>limit?limit/len:1;stickX=dx*scale/limit;stickY=dy*scale/limit;stickKnob.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;}
+function releaseStick(){stickPointer=null;stickX=0;stickY=0;stickKnob.style.transform='translate(0,0)'}
+moveStick.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;stickPointer=e.pointerId;moveStick.setPointerCapture(e.pointerId);setStick(e);e.preventDefault()});
+moveStick.addEventListener('pointermove',e=>{if(e.pointerId===stickPointer)setStick(e)});
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>moveStick.addEventListener(ev,releaseStick));
+function toggleCrouch(){crouching=!crouching;const b=document.querySelector('[data-action=crouch]');b.classList.toggle('active',crouching);b.style.background=crouching?'#b2d5a5':'#173b36bb';showMsg(crouching?'已蹲下：移動較慢，較不容易被感染者察覺':'已站起來');}
+// Touch-look uses its own right-side zone, so the movement pad and action buttons can be pressed simultaneously.
+const lookZone=$('lookZone');let lookPointer=null,lastTouchX=0,lastTouchY=0;
+lookZone.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;lookPointer=e.pointerId;lastTouchX=e.clientX;lastTouchY=e.clientY;lookZone.setPointerCapture(e.pointerId);e.preventDefault()});
+lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer||!started||ended)return;const dx=e.clientX-lastTouchX,dy=e.clientY-lastTouchY;lastTouchX=e.clientX;lastTouchY=e.clientY;yaw-=dx*.006;pitch-=dy*.006;pitch=Math.max(-1.25,Math.min(1.25,pitch));e.preventDefault()});
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>lookZone.addEventListener(ev,e=>{if(e.pointerId===lookPointer)lookPointer=null}));
+
+function useNearby(){
+ if(!started||ended)return;
+ // Axe harvesting is a resource interaction, separate from combat.
+ if(weaponEquipped&&weaponType==='axe'){
+  const palm=harvestablePalms.find(t=>!t.regrowAt&&Math.hypot(t.x-player.x,t.z-player.z)<3.8);
+  if(palm){
+   scene.remove(palm.palm);scene.remove(palm.cluster);removeCollider(palm.collider);palm.collider=null;
+   palm.item.depleted=true;palm.item.respawnAt=elapsed+180;palm.item.collider=null;palm.regrowAt=elapsed+180;
+   wood+=5;interactAnim=.8;attackAnim=.55;makeNoise(6);updateHud();showMsg('砍伐椰子樹成功：木材 +5；椰子樹約 3 分鐘後重新生長');return;
+  }
+  const fruitTree=harvestableFruitTrees.find(t=>!t.regrowAt&&Math.hypot(t.x-player.x,t.z-player.z)<3.8);
+  if(fruitTree){scene.remove(fruitTree.tree);scene.remove(fruitTree.fruitGroup);removeCollider(fruitTree.collider);fruitTree.collider=null;fruitTree.item.depleted=true;fruitTree.item.respawnAt=elapsed+180;fruitTree.item.collider=null;fruitTree.regrowAt=elapsed+180;wood+=5;interactAnim=.8;attackAnim=.55;makeNoise(6);updateHud();showMsg('砍伐果樹成功：木材 +5；果樹約 3 分鐘後重新生長');return;}
+  const tree=harvestableTrees.find(t=>!t.regrowAt&&Math.hypot(t.x-player.x,t.z-player.z)<3.4);
+  if(tree){scene.remove(tree.mesh);removeCollider(tree.collider);tree.collider=null;tree.regrowAt=elapsed+180;wood+=4;interactAnim=.8;attackAnim=.55;makeNoise(5);updateHud();showMsg('砍伐樹木成功：木材 +4；樹木約 3 分鐘後重新生長');return;}
+ }
+ if(nearby&&nearby.type==='item'){triggerPickup();let it=nearby.item;if(it.dropId){const id=it.dropId;if(id==='food')food++;else if(id==='water')water++;else if(id==='med')medkits++;else if(id==='pulse')pulses++;else if(id==='campkit')campKits++;else if(id==='wood')wood++;else if(id==='stone')stone++;else if(id==='fiber')fiber++;else if(id==='cloth')cloth++;else if(id==='herb')herbs++;else if(id==='metal')metalParts++;else if(['spear','axe','bow','flare'].includes(id)){weapons[id]=true;weaponOwned=true;}scene.remove(it.mesh);items=items.filter(v=>v!==it);showMsg('拾回 '+(quickById(id)?.name||'物品'));updateHud();return;} if(it.type==='crate'){if(it.opened)return;it.opened=true;openedCrates++;let loot=[['wood',3],['food',1],['water',2],['cloth',2],['stone',2],['fiber',3],['herb',2]][Math.floor(Math.random()*7)];if(loot[0]==='wood')wood+=loot[1];if(loot[0]==='food')food+=loot[1];if(loot[0]==='water')water+=loot[1];if(loot[0]==='cloth')cloth+=loot[1];if(loot[0]==='stone')stone+=loot[1];if(loot[0]==='fiber')fiber+=loot[1];if(loot[0]==='herb')herbs+=loot[1];it.mesh.material=makeMat(0x45433b);showMsg(`補給箱已開啟：${{wood:'木材',food:'食物',water:'飲水',cloth:'布料',stone:'石材',fiber:'纖維',herb:'草藥'}[loot[0]]} +${loot[1]}`);updateHud();return} let label='';
+ if(it.type==='wood'){wood+=2;label='拾取枯枝木材 +2'}
+ if(it.type==='stone'){stone+=2;label='從岩石堆取得石材 +2'}
+ if(it.type==='ore'){stone+=4;label='從洞穴礦脈取得稀有礦石 +4'}
+ if(it.type==='fiber'){fiber+=2;label='採集植物纖維 +2'}
+ if(it.type==='herb'){herbs+=1;label='採集野生草藥 +1'}
+ if(it.type==='food'||it.type==='berry'||it.type==='fruit'||it.type==='mushroom'){food+=1;label=it.type==='berry'?'採下灌木莓果 +1':it.type==='fruit'?'摘下樹上果實 +1':it.type==='mushroom'?'採集林下野菇 +1':'取得食物 +1'}
+ if(it.type==='coconut'){food+=1;water+=1;label='從椰子樹摘下椰子：食物 +1、飲水 +1'}
+ if(it.type==='water'){water+=1;label='取得飲水 +1'}
+ if(it.type==='spring'){water+=2;label='從溪流取水 +2'}
+ if(it.type==='cloth') {cloth+=1;label='取得布料 +1'}
+ if(it.resource){scene.remove(it.mesh);removeCollider(it.collider);it.depleted=true;it.respawnAt=elapsed+75}else{scene.remove(it.mesh);items=items.filter(v=>v!==it)}
+ if(it.ring)scene.remove(it.ring);showMsg(label||'取得物資');updateHud();return}
+ if(currentInterior){const doorDist=Math.hypot(player.x-currentInterior.x,player.z-(currentInterior.z+currentInterior.d/2+1.1));if(doorDist<2.6){player.x=currentInterior.x;player.z=currentInterior.z+currentInterior.d/2+4;currentInterior=null;showMsg('已離開建築');return}}
+ let drawer=interiorContainers.find(c=>!c.opened&&Math.hypot(c.x-player.x,c.z-player.z)<2.4);
+ if(drawer){interactAnim=.8;pickupAnim=.8;drawer.opened=true;drawer.drawer.rotation.x=-.72;makeNoise(7);let loot=drawer.lootType;let msg='';if(loot==='metal'){metalParts+=2;cloth+=1;msg='金屬零件 +2、布料 +1'}else if(loot==='medical'){medkits++;herbs+=2;msg='醫療包 +1、草藥 +2'}else if(loot==='research'){metalParts+=1;stone+=2;msg='金屬零件 +1、石材 +2'}else if(loot==='supply'){wood+=3;fiber+=2;msg='木材 +3、纖維 +2'}else{cloth+=1;fiber+=2;msg='布料 +1、纖維 +2'}showMsg('搜刮 '+drawer.label+'：'+msg);updateHud();return}
+ let entrance=poi.find(p=>Math.hypot(player.x-p.x,player.z-(p.z+p.d/2+1.4))<2.8);
+ if(entrance&&!currentInterior){currentInterior=entrance;player.x=entrance.x;player.z=entrance.z+entrance.d/2-1.5;showMsg('進入'+entrance.label+'：搜尋櫃子與抽屜');return}
+ showMsg('附近沒有可採集或互動的目標；選取食物或飲水後，請用滑鼠左鍵／使用鍵補給');
+}
+function createFirstPersonHands(){
+ handRig=new THREE.Group();handRig.position.set(.39,.16,-.92);handRig.rotation.set(-.03,-.08,.02);handRig.scale.setScalar(1.12);camera.add(handRig);
+ const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.105,.145,.52,10),new THREE.MeshStandardMaterial({color:0x34483c,roughness:.95}));sleeve.rotation.x=-.34;sleeve.position.set(0,-.13,-.02);handRig.add(sleeve);
+ const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.112,.12,.09,10),new THREE.MeshStandardMaterial({color:0x202d29,roughness:1}));cuff.rotation.x=-.34;cuff.position.set(0,-.37,.055);handRig.add(cuff);
+ const skin=new THREE.MeshStandardMaterial({color:0xb98260,roughness:.82});
+ const palm=new THREE.Mesh(new THREE.BoxGeometry(.19,.22,.105),skin);palm.position.set(0,-.43,-.13);palm.rotation.x=-.18;handRig.add(palm);
+ for(let i=0;i<4;i++){const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.027,.105,3,6),skin);finger.position.set(-.067+i*.045,-.53,-.19);finger.rotation.x=-.25;handRig.add(finger)}
+ const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.03,.09,3,6),skin);thumb.position.set(.115,-.43,-.15);thumb.rotation.z=-.72;handRig.add(thumb);
+ flashlightModel=new THREE.Group();
+ const bodyMat=new THREE.MeshStandardMaterial({color:0x263b3a,metalness:.62,roughness:.34}),lensMat=new THREE.MeshStandardMaterial({color:0xdff6ce,emissive:0x9bcf82,emissiveIntensity:.8,roughness:.2});
+ const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,12),bodyMat);barrel.rotation.x=Math.PI/2;barrel.position.set(0,-.39,-.43);flashlightModel.add(barrel);
+ const lens=new THREE.Mesh(new THREE.CircleGeometry(.052,12),lensMat);lens.position.set(0,-.39,-.645);flashlightModel.add(lens);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(.057,.012,6,12),bodyMat);rim.position.set(0,-.39,-.64);flashlightModel.add(rim);handRig.add(flashlightModel);
+ spearModel=new THREE.Group();const woodMat=new THREE.MeshStandardMaterial({color:0x795333,roughness:1}),stoneMat=new THREE.MeshStandardMaterial({color:0x9aa6a0,roughness:.86});
+ const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.026,.04,1.18,8),woodMat);shaft.rotation.x=Math.PI/2;shaft.position.set(0,-.39,-.72);spearModel.add(shaft);
+ const tip=new THREE.Mesh(new THREE.ConeGeometry(.095,.3,7),stoneMat);tip.rotation.x=-Math.PI/2;tip.position.set(0,-.39,-1.43);spearModel.add(tip);
+ const lash=new THREE.Mesh(new THREE.TorusGeometry(.045,.012,5,8),new THREE.MeshStandardMaterial({color:0x4c3928}));lash.position.set(0,-.39,-.59);spearModel.add(lash);handRig.add(spearModel);
+ axeModel=new THREE.Group();const axeHandle=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.9,8),woodMat);axeHandle.rotation.x=Math.PI/2;axeHandle.position.set(0,-.39,-.72);axeModel.add(axeHandle);const axeHead=new THREE.Mesh(new THREE.BoxGeometry(.34,.23,.12),stoneMat);axeHead.position.set(.13,-.39,-1.05);axeModel.add(axeHead);handRig.add(axeModel);
+ bowModel=new THREE.Group();const bowCurve=new THREE.Mesh(new THREE.TorusGeometry(.48,.035,7,24,Math.PI),woodMat);bowCurve.rotation.z=Math.PI/2;bowCurve.position.set(0,-.39,-.78);bowModel.add(bowCurve);const bowString=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.92,5),makeMat(0xd9d0b8));bowString.position.set(0,-.39,-.78);bowModel.add(bowString);handRig.add(bowModel);
+ flareModel=new THREE.Group();const flareBody=new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.48,10),makeMat(0xb94b35));flareBody.rotation.x=Math.PI/2;flareBody.position.set(0,-.39,-.72);flareModel.add(flareBody);const flareTop=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.09,10),makeMat(0xd9b36a));flareTop.rotation.x=Math.PI/2;flareTop.position.set(0,-.39,-.98);flareModel.add(flareTop);handRig.add(flareModel);
+ // 左手與前臂：獨立模型，固定顯示在畫面左下方，搜刮時會伸手互動
+ leftHandRig=new THREE.Group();leftHandRig.position.set(-.42,.18,-.86);leftHandRig.rotation.set(-.05,.10,-.08);leftHandRig.scale.setScalar(1.12);camera.add(leftHandRig);
+ const lsleeve=new THREE.Mesh(new THREE.CylinderGeometry(.105,.145,.58,10),new THREE.MeshStandardMaterial({color:0x405344,roughness:.96}));lsleeve.rotation.x=-.28;lsleeve.position.set(0,-.10,-.02);leftHandRig.add(lsleeve);
+ const lcuff=new THREE.Mesh(new THREE.CylinderGeometry(.112,.12,.10,10),new THREE.MeshStandardMaterial({color:0x202d29,roughness:1}));lcuff.rotation.x=-.28;lcuff.position.set(0,-.34,.05);leftHandRig.add(lcuff);
+ const lskin=new THREE.MeshStandardMaterial({color:0xb98260,roughness:.82});
+ const lpalm=new THREE.Mesh(new THREE.BoxGeometry(.20,.22,.11),lskin);lpalm.position.set(0,-.40,-.13);lpalm.rotation.x=-.16;leftHandRig.add(lpalm);
+ for(let i=0;i<4;i++){const f=new THREE.Mesh(new THREE.CapsuleGeometry(.028,.105,3,6),lskin);f.position.set(-.068+i*.045,-.50,-.19);f.rotation.x=-.22;leftHandRig.add(f)}
+ const lt=new THREE.Mesh(new THREE.CapsuleGeometry(.03,.09,3,6),lskin);lt.position.set(.115,-.40,-.15);lt.rotation.z=-.72;leftHandRig.add(lt);
+ syncHeldItem();
+ // Keep the first-person hands in the foreground and safely inside the camera frustum.
+ for(const rig of [handRig,leftHandRig])rig.traverse(o=>{if(o.isMesh){o.renderOrder=20;if(o.material){o.material.depthTest=false;o.material.depthWrite=false;}}});
+}
+function syncHeldItem(){if(!handRig)return;drawAnim=.34;const visible=weaponEquipped;flashlightModel.visible=!visible;if(spearModel)spearModel.visible=visible&&weaponType==='spear';if(axeModel)axeModel.visible=visible&&weaponType==='axe';if(bowModel)bowModel.visible=visible&&weaponType==='bow';if(flareModel)flareModel.visible=visible&&weaponType==='flare';const wb=document.querySelector('[data-action=weapon]');if(wb){wb.style.background=visible?'#b2d5a5':'#173b36bb';wb.innerHTML=visible?({spear:'長矛',axe:'石斧',bow:'簡易弓',flare:'訊號槍'}[weaponType]+'<br>已裝備'):'武器<br>2';}}
+function triggerPickup(){pickupAnim=.62;}
+function toggleWeapon(){const owned=['spear','axe','bow','flare'].filter(k=>weapons[k]);if(!owned.length){showMsg('尚未製作武器：請先到製作台');return}if(weaponEquipped){weaponEquipped=false;syncHeldItem();showMsg('已收起武器');return}weaponType=owned[(owned.indexOf(weaponType)+1)%owned.length];weaponEquipped=true;syncHeldItem();showMsg('已切換裝備：'+({spear:'長矛',axe:'石斧',bow:'簡易弓',flare:'訊號手槍'}[weaponType]));}
+function attack(){if(!started||ended)return;if(!weaponEquipped){showMsg('請先從快速物品欄選取武器');return}if(attackAnim>.12)return;attackAnim=weaponType==='bow'?.58:.42;makeNoise(weaponType==='flare'?24:weaponType==='bow'?13:8);let hit=0;const reach=weaponType==='spear'?2.8:weaponType==='axe'?2.1:weaponType==='bow'?18:22;for(const z of zombies){const dx=z.x-player.x,dz=z.z-player.z,d=Math.hypot(dx,dz);const facing=(-dx*Math.sin(yaw)-dz*Math.cos(yaw))/Math.max(d,.001);if(d<reach&&facing>.82){if(weaponType==='bow'||weaponType==='flare'){z.stun=weaponType==='flare'?2.8:2.1;z.flash=.3;}else{z.stun=z.variant==='brute'?1.8:3.2;z.flash=.24;z.x-=Math.sin(yaw)*.72;z.z-=Math.cos(yaw)*.72;}hit++;}}showMsg(hit?({spear:'長矛刺中',axe:'石斧擊中',bow:'箭矢命中',flare:'訊號彈擊中'}[weaponType])+`！${hit} 隻感染者受到干擾`:'攻擊沒有命中目標');}
+function updateHandAnimation(dt,moving){if(!handRig)return;pickupAnim=Math.max(0,pickupAnim-dt);attackAnim=Math.max(0,attackAnim-dt);const t=performance.now()*.001;const walk=moving?Math.sin(t*9)*.025:0;drawAnim=Math.max(0,drawAnim-dt);let draw=Math.sin((1-drawAnim/.34)*Math.PI)*.22;let raise=flashlightOn&&!weaponEquipped?-.10:0;let pick=pickupAnim>0?Math.sin((1-pickupAnim/.8)*Math.PI)*.42:0;let interact=interactAnim>0?Math.sin((1-interactAnim/.8)*Math.PI)*.55:0;interactAnim=Math.max(0,interactAnim-dt);let strike=attackAnim>0?Math.sin((1-attackAnim/(weaponType==='bow'?.58:.42))*Math.PI)*(weaponType==='axe'?1.18:weaponType==='bow'?.48:weaponType==='flare'?.34:.95):0;handRig.position.y=-.43+walk+pick*.18+interact*.16-strike*.13+raise-draw*.22;handRig.position.x=.43+walk*.35-strike*.10;handRig.rotation.x=-.08-pick*.75-interact*.72+strike*1.18+raise+draw*.9;handRig.rotation.y=-.08+Math.sin(t*4)*.012;handRig.rotation.z=.02+walk*.55-strike*.32;if(leftHandRig){leftHandRig.position.y=-.28+walk*.7+pick*.30+interact*.34;leftHandRig.position.x=-.43+walk*.22;leftHandRig.rotation.x=-.12-pick*.95-interact*1.05+strike*.16;leftHandRig.rotation.z=-.08-walk*.35+interact*.18;}}
+function pulse(){
+ if(!started||ended)return;if(pulses<=0){showMsg('防護脈衝已用完');return}
+ pulses--;let count=0;for(let z of zombies){let d=Math.hypot(z.x-player.x,z.z-player.z);if(d<11){z.stun=5;count++}}
+ showMsg(count?`防護脈衝啟動！${count} 隻感染者暫時被擊退`:'脈衝啟動，但附近沒有感染者');updateHud();
+}
+function toggleFlashlight(){if(!flashlight)return;flashlightOn=!flashlightOn;drawAnim=.28;if(flashlightOn&&weaponEquipped){weaponEquipped=false;syncHeldItem()}flashlight.intensity=flashlightOn?52:0;if(flashlightFill)flashlightFill.intensity=flashlightOn?4.5:0;if(handRig&&flashlightModel){const lens=flashlightModel.children.find(o=>o.material&&o.material.emissive);if(lens)lens.material.emissiveIntensity=flashlightOn?2.4:.35;}showMsg(flashlightOn?'手電筒已開啟':'手電筒已關閉')}
+function updateHud(){
+ for(let [id,v] of [['health',health],['hunger',hunger],['thirst',thirst],['stamina',stamina]]){$(id).style.width=Math.max(0,v)+'%';$(id+'N').textContent=Math.round(v)}
+ $('woodN').textContent=wood;$('stoneN').textContent=stone;$('fiberN').textContent=fiber;$('herbN').textContent=herbs;$('foodN').textContent=food;$('waterN').textContent=water;$('pulseN').textContent=pulses;$('clothN').textContent=cloth;$('medN').textContent=medkits;if($('metalN'))$('metalN').textContent=metalParts;
+}
+function getSaveData(){
+ return {version:217,savedAt:new Date().toISOString(),player:{x:player?.x||0,z:player?.z||0},yaw,pitch,health,hunger,thirst,stamina,wood,food,water,pulses,dayTime,day,elapsed,cloth,medkits,stone,fiber,herbs,metalParts,campKits,hotbarSlots,weapons,weaponType,openedCrates,openedInterior:interiorContainers.map((c,i)=>c.opened?i:null).filter(v=>v!==null),crouching,flashlightOn,weaponOwned,weaponEquipped};
+}
+function saveGame(silent=false){
+ if(!player){if(!silent)showMsg('目前尚未進入島嶼，無法儲存');return false;}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify(getSaveData()));$('saveInfo').textContent='已保存：'+new Date().toLocaleString();if(!silent)showMsg('進度已儲存！可在下次進入時讀取');return true;}
+ catch(e){if(!silent)showMsg('儲存失敗：瀏覽器可能限制了本機儲存空間');return false;}
+}
+function readSave(){
+ try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;const d=JSON.parse(raw);if(!d||![210,211,213,217].includes(d.version)||!d.player)return null;return d;}catch(e){return null;}
+}
+function loadGame(){
+ const d=readSave();if(!d){showMsg('找不到有效存檔，請先開始新旅程');return;}
+ if(!player){showMsg('遊戲場景尚未準備完成');return;}
+ player.x=Math.max(-playableRadius+2,Math.min(playableRadius-2,Number(d.player.x)||0));player.z=Math.max(-playableRadius+2,Math.min(playableRadius-2,Number(d.player.z)||0));currentInterior=poi.find(p=>Math.abs(player.x-p.x)<p.w/2-.3&&Math.abs(player.z-p.z)<p.d/2-.3)||null;
+ for(const k of ['yaw','pitch','health','hunger','thirst','stamina','wood','food','water','pulses','campKits','dayTime','day','elapsed','cloth','medkits','stone','fiber','herbs','metalParts','openedCrates'])if(Number.isFinite(Number(d[k])))evalAssign(k,Number(d[k]));
+ if(Array.isArray(d.hotbarSlots)&&d.hotbarSlots.length===9)hotbarSlots=d.hotbarSlots.slice(0,9);crouching=!!d.crouching;flashlightOn=!!d.flashlightOn;weaponOwned=!!d.weaponOwned;weapons=Object.assign({spear:!!d.weaponOwned,axe:false,bow:false,flare:false},d.weapons||{});weaponOwned=weaponOwned||Object.values(weapons).some(Boolean);for(const i of (d.openedInterior||[])){if(interiorContainers[i]){interiorContainers[i].opened=true;interiorContainers[i].drawer.rotation.x=-.72;}}weaponEquipped=!!d.weaponEquipped&&weaponOwned;weaponType=d.weaponType||'spear';if(flashlight)flashlight.intensity=flashlightOn?52:0;if(flashlightFill)flashlightFill.intensity=flashlightOn?4.5:0;if(handRig){syncHeldItem();}
+ camera.position.set(player.x,terrainHeight(player.x,player.z)+1.68,player.z);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+ const crouchBtn=document.querySelector('[data-action=crouch]');crouchBtn.classList.toggle('active',crouching);crouchBtn.style.background=crouching?'#b2d5a5':'#173b36bb';updateHud();renderQuickbar();$('saveInfo').textContent='上次保存：'+new Date(d.savedAt).toLocaleString();
+ showMsg('已讀取生存進度！提醒：自然物資與補給箱會重新生成');return true;
+}
+function evalAssign(k,v){switch(k){case'yaw':yaw=v;break;case'pitch':pitch=v;break;case'health':health=v;break;case'hunger':hunger=v;break;case'thirst':thirst=v;break;case'stamina':stamina=v;break;case'wood':wood=v;break;case'food':food=v;break;case'water':water=v;break;case'pulses':pulses=v;break;case'campKits':campKits=v;break;case'dayTime':dayTime=v;break;case'day':day=v;break;case'elapsed':elapsed=v;break;case'cloth':cloth=v;break;case'medkits':medkits=v;break;case'stone':stone=v;break;case'fiber':fiber=v;break;case'herbs':herbs=v;break;case'metalParts':metalParts=v;break;case'openedCrates':openedCrates=v;break;}}
+function refreshSaveInfo(){const d=readSave();$('saveInfo').textContent=d?'已有存檔 · '+new Date(d.savedAt).toLocaleString():'尚無已儲存的進度';$('loadBtn').disabled=!d;$('loadBtn').style.opacity=d?1:.55;}
+let runtimeFaulted=false;
+function reportRuntimeFault(err,where='遊戲更新'){
+ if(runtimeFaulted)return;runtimeFaulted=true;started=false;console.error('ISLAND ZERO runtime fault ('+where+'):',err);
+ let panel=document.getElementById('runtimeErrorPanel');
+ if(!panel){panel=document.createElement('div');panel.id='runtimeErrorPanel';panel.style.cssText='position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 28px));padding:20px;border:1px solid #e9a36b;border-radius:14px;background:#172126f5;color:#fff;font:14px/1.6 system-ui,sans-serif;box-shadow:0 12px 45px #000b;';document.body.appendChild(panel);}
+ const msg=err&&err.message?err.message:String(err||'未知錯誤');panel.innerHTML='<b style="color:#ffc18b;font-size:18px">遊戲執行時發生錯誤，已暫停避免整個頁面卡死</b><p>錯誤位置：'+String(where).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#080e12;padding:10px;border-radius:8px">'+msg.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</pre><p>請截圖這個錯誤訊息回報，以便精確修正。</p><button onclick="location.reload()" style="padding:9px 15px;border:0;border-radius:8px;background:#d38b55;color:#171717;font-weight:700">重新載入遊戲</button>';
+}
+window.addEventListener('error',e=>{if(started)reportRuntimeFault(e.error||e.message,'JavaScript');});
+window.addEventListener('unhandledrejection',e=>{if(started)reportRuntimeFault(e.reason,'非同步工作');});
+function animate(){
+ requestAnimationFrame(animate);if(!scene||runtimeFaulted)return;
+ try{const dt=Math.min(clock.getDelta(),.05);if(started&&!ended)update(dt);renderer.render(scene,camera);}
+ catch(err){reportRuntimeFault(err,'每幀更新 / 繪圖');}
+}
+let recoveryTimer=0;
+function recoverPlayerIfStuck(dt=0){
+ recoveryTimer-=dt;if(recoveryTimer>0||!player)return;recoveryTimer=.65;if(!blocked(player.x,player.z))return;
+ for(let r=.8;r<=8;r+=.4){
+  for(let a=0;a<Math.PI*2;a+=Math.PI/8){
+   const x=player.x+Math.cos(a)*r,z=player.z+Math.sin(a)*r;
+   if(Math.hypot(x,z)<playableRadius&&!blocked(x,z)){player.x=x;player.z=z;showMsg('已自動調整位置，避免卡在障礙物內');return;}
+  }
+ }
+}
+function update(dt){
+ recoverPlayerIfStuck(dt);
+ elapsed+=dt;noiseTimer=Math.max(0,noiseTimer-dt);dayTime+=dt*1.55;lastAutoSave+=dt;if(lastAutoSave>=30){lastAutoSave=0;saveGame(true);}if(dayTime>=1440){dayTime-=1440;day++;showMsg('新的一天開始了。')}
+ const hh=Math.floor(dayTime/60),mm=Math.floor(dayTime%60);$('objective').innerHTML=`DAY ${day} · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}<br><b>${hh>=18||hh<6?'夜晚來臨！注意周圍的感染者':'任務：採集野果、收集物資，撐過夜晚'}</b>`;
+ let forward=Math.max(-1,Math.min(1,(keys.KeyW?1:0)-(keys.KeyS?1:0)-stickY)),side=Math.max(-1,Math.min(1,(keys.KeyD?1:0)-(keys.KeyA?1:0)+stickX));
+ let moving=forward!==0||side!==0,run=(keys.ShiftLeft||keys.ShiftRight||mobileRun)&&stamina>1&&moving;
+ let speed=crouching?2.65:(run?9:5.2);if(run){stamina=Math.max(0,stamina-23*dt);if(Math.random()<dt*2.2)makeNoise(9);}else{stamina=Math.min(100,stamina+13*dt);if(moving&&!crouching&&Math.random()<dt*.22)makeNoise(3);}
+ if(moving){let len=Math.hypot(forward,side);forward/=len;side/=len;let dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed*dt,dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*speed*dt;const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let si=0;si<steps;si++){let sx=dx/steps,sz=dz/steps,nx=player.x+sx,nz=player.z+sz;if(Math.hypot(nx,nz)<playableRadius){if(!blocked(nx,player.z))player.x=nx;if(!blocked(player.x,nz))player.z=nz}}}
+ let y=terrainHeight(player.x,player.z);camera.position.set(player.x,y+1.68,player.z);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+ if(flashlight&&flashlightFill){const dir=new THREE.Vector3();camera.getWorldDirection(dir);const origin=camera.position.clone().addScaledVector(dir,.32).add(new THREE.Vector3(.16,-.12,0));flashlight.position.copy(origin);flashlight.target.position.copy(origin).addScaledVector(dir,12);flashlightFill.position.copy(camera.position).addScaledVector(dir,.48);flashlight.updateMatrixWorld(true);flashlight.target.updateMatrixWorld(true);flashlightFill.updateMatrixWorld(true);}
+ updateHandAnimation(dt,moving);
+ hunger=Math.max(0,hunger-.19*dt);thirst=Math.max(0,thirst-.29*dt);
+ if(hunger<=0||thirst<=0)health=Math.max(0,health-(hunger<=0?3.2:4.5)*dt);
+ for(const c of camps){if(Math.hypot(c.x-player.x,c.z-player.z)<7)health=Math.min(100,health+1.4*dt)}
+ for(const sh of shelters){if(Math.hypot(sh.x-player.x,sh.z-player.z)<4)stamina=Math.min(100,stamina+5*dt)}
+ let night=(hh>=18||hh<6);let darkness=night?0.48:0;scene.background.set(night?0x101d2a:0x91b6bd);scene.fog.color.set(night?0x101d2a:0x91b6bd);
+ scene.children.forEach(o=>{if(o.isDirectionalLight)o.intensity=night?.45:2.1});
+ nearby=null;let best=3.1;
+ if(Math.hypot(player.x,player.z)>220&&lastMsg<=0)showMsg('前方已接近島嶼邊界，外側是深海。');
+ for(const t of harvestableTrees){if(t.regrowAt&&elapsed>=t.regrowAt){t.regrowAt=0;scene.add(t.mesh);t.collider=addCircleCollider(t.x,t.z,.58*t.scale);}}
+ for(const p of harvestablePalms){if(p.regrowAt&&elapsed>=p.regrowAt){p.regrowAt=0;scene.add(p.palm,p.cluster);p.collider=addCircleCollider(p.x,p.z,.72);p.item.collider=p.collider;p.item.depleted=false;p.item.respawnAt=0;showMsg('椰子樹已重新生長');}}
+ for(const f of harvestableFruitTrees){if(f.regrowAt&&elapsed>=f.regrowAt){f.regrowAt=0;scene.add(f.tree,f.fruitGroup);f.collider=addCircleCollider(f.x,f.z,.72);f.item.collider=f.collider;f.item.depleted=false;f.item.respawnAt=0;showMsg('果樹已重新生長');}}
+ for(let it of items){if(it.depleted){if(it.type==='coconut'||it.type==='fruit')continue;if(elapsed>=it.respawnAt){it.depleted=false;scene.add(it.mesh);if(it.collider&&!colliders.includes(it.collider))indexCollider(it.collider),colliders.push(it.collider);else if(!it.collider&&it.colliderRadius)it.collider=addCircleCollider(it.x,it.z,it.colliderRadius);showMsg('附近的自然資源已重新生長');}else continue;}if(it.type!=='crate'){ if(it.type==='berry'){it.mesh.rotation.y+=dt*.12;}else if(it.type==='fruit'){it.mesh.rotation.y+=dt*.18;}else if(it.type==='stone'){it.mesh.rotation.y+=dt*.04;}else if(it.type==='spring'){it.mesh.material.opacity=.65+Math.sin(elapsed*2+it.x)*.15;}else{it.mesh.rotation.y+=dt*.18;}if(it.ring)it.ring.position.copy(it.mesh.position)}let d=Math.hypot(it.x-player.x,it.z-player.z);if(d<best&&(!it.opened)){best=d;nearby={type:'item',item:it}}}
+ for(let z of zombies){
+  let dx=player.x-z.x,dz=player.z-z.z,d=Math.hypot(dx,dz);
+  if(z.flash>0){z.flash=Math.max(0,z.flash-dt);z.group.traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive){o.material.emissive.setHex(0x8f2418);o.material.emissiveIntensity=z.flash>0?1.25:0;}})}
+  if(z.stun>0){z.stun-=dt;z.group.rotation.z=Math.sin(elapsed*18+z.phase)*.12;z.group.rotation.y+=dt*2.8}
+  else {z.group.rotation.z*=.82;const detect=crouching?13:(z.variant==='runner'?34:27);if(!z.aiState)z.aiState='patrol';if(noiseTimer>0&&Math.hypot(z.x-noiseX,z.z-noiseZ)<noiseLevel*1.5&&d>detect){z.aiState='investigate';z.targetX=noiseX;z.targetZ=noiseZ;z.stateTime=7;}if(d<detect){z.aiState='chase';z.stateTime=5;z.targetX=player.x;z.targetZ=player.z;}else if(z.aiState==='chase'){z.stateTime-=dt;if(z.stateTime<=0)z.aiState='search';}else if(z.aiState==='investigate'||z.aiState==='search'){z.stateTime-=dt;if(z.stateTime<=0)z.aiState='patrol';}
+   let tx=0,tz=0,spd=0;if(z.aiState==='chase'){tx=player.x;tz=player.z;spd=z.variant==='runner'?2.8:z.variant==='brute'?1.15:1.65;}else if(z.aiState==='investigate'||z.aiState==='search'){tx=z.targetX;tz=z.targetZ;spd=1.15;}else{if(!z.patrolAt||Math.hypot(z.x-z.patrolAt.x,z.z-z.patrolAt.z)<1.2||!z.patrolTimer||z.patrolTimer<=0){const a=rnd(0,Math.PI*2),r=rnd(4,11);z.patrolAt={x:z.homeX+Math.cos(a)*r,z:z.homeZ+Math.sin(a)*r};z.patrolTimer=rnd(3,7);}z.patrolTimer-=dt;tx=z.patrolAt.x;tz=z.patrolAt.z;spd=.48;}
+   let vx=tx-z.x,vz=tz-z.z,vd=Math.hypot(vx,vz);if(vd>.2){const step=Math.min(spd*(z.aiState==='chase'&&night?1.35:1)*dt,vd),nx=z.x+vx/vd*step,nz=z.z+vz/vd*step;const radius=z.variant==='brute'?.72:.48;let moved=false;if(Math.hypot(nx,nz)<playableRadius&&!blocked(nx,z.z,radius)){z.x=nx;moved=true;}if(Math.hypot(z.x,nz)<playableRadius&&!blocked(z.x,nz,radius)){z.z=nz;moved=true;}if(moved)z.group.rotation.y=Math.atan2(vx,vz);else{z.aiState='search';z.stateTime=1.8;z.targetX=z.x+Math.cos(elapsed+z.phase)*2;z.targetZ=z.z+Math.sin(elapsed+z.phase)*2;}}if(z.aiState==='search'){z.group.rotation.y+=Math.sin(elapsed*3+z.phase)*dt*.9;}}
+  const bob=z.stun>0?0:Math.sin(elapsed*(z.variant==='runner'?8:4)+z.phase)*.055;z.group.position.set(z.x,terrainHeight(z.x,z.z)+bob,z.z);
+  if(d<1.55){health=Math.max(0,health-(z.variant==='brute'?18:13)*dt)}
+ }
+ if(lastMsg>0){lastMsg-=dt;if(lastMsg<=0)$('message').style.opacity=0}
+ let nearPoi=poi.find(p=>Math.hypot(p.x-player.x,p.z-player.z)<16);let biome=Math.hypot(player.x,player.z)>118?'海岸線':(player.x<-125&&player.z<0?'西側沼澤':(player.x>120&&player.z>0?'東岸濕地':(player.z>125?'北部竹林':(Math.hypot(player.x+166,player.z-132)<22?'西北礦洞':(Math.hypot(player.x+160,player.z-20)<48?'竹林山麓':(Math.hypot(player.x-160,player.z-70)<55?'東部丘陵':'森林地帶'))))));$('locationTag').textContent='📍 '+(nearPoi?nearPoi.label:biome);
+ const nearDrawer=interiorContainers.find(c=>!c.opened&&Math.hypot(c.x-player.x,c.z-player.z)<2.4);const nearDoor=poi.find(p=>Math.hypot(player.x-p.x,player.z-(p.z+p.d/2+1.4))<2.8);const exitNear=currentInterior&&Math.hypot(player.x-currentInterior.x,player.z-(currentInterior.z+currentInterior.d/2+1.1))<3.2;$('prompt').textContent=nearby?'[E] '+(nearby.item.dropId?'拾取 '+(quickById(nearby.item.dropId)?.name||'物品'):(nearby.item.type==='crate'?'開啟補給箱':'採集 '+({wood:'枯枝木材',food:'食物',berry:'灌木莓果',fruit:'樹上果實',water:'飲水',cloth:'布料',stone:'岩石石材',ore:'洞穴礦石',fiber:'植物纖維',herb:'草藥',spring:'溪流水源',coconut:'樹上椰子',mushroom:'林下野菇'}[nearby.item.type]))):nearDrawer?'[E] 搜刮抽屜':exitNear?'[E] 離開建築':nearDoor?'[E] 進入 '+nearDoor.label:'';
+ updateHud();
+ if(health<=0)finish(false);
+ if(elapsed>=900)finish(true);
+}
+function finish(win){saveGame(true);ended=true;$('result').style.display='grid';$('resultTitle').textContent=win?'成功生還！':'生存結束';$('resultText').textContent=`你在島上生存了 ${Math.floor(elapsed/60)} 分鐘。第 ${day} 天 · 木材 ${wood} · 石材 ${stone} · 纖維 ${fiber} · 食物 ${food} · 飲水 ${water} · 探索補給箱 ${openedCrates}`;}
+
+function toggleCraft(force){const p=$('craftPanel'),opening=force===undefined?p.style.display!=='block':!!force;p.style.display=opening?'block':'none';if(matchMedia('(pointer:fine)').matches&&started&&!ended){if(opening){if(document.pointerLockElement)document.exitPointerLock();}else safeRequestPointerLock();}}
+function craftSpear(){if(weapons.spear){showMsg('已經製作過簡易長矛');return}if(wood<4||stone<2||fiber<2){showMsg('材料不足：需要木材 ×4、石材 ×2、纖維 ×2');return}wood-=4;stone-=2;fiber-=2;weaponOwned=true;weapons.spear=true;weaponType='spear';weaponEquipped=true;syncHeldItem();showMsg('簡易長矛製作完成！可從背包放入快速物品欄');updateHud()}
+function craftAxe(){if(weapons.axe){showMsg('已經製作過石斧');return}if(wood<3||stone<3||fiber<2){showMsg('材料不足：木材 ×3、石材 ×3、纖維 ×2');return}wood-=3;stone-=3;fiber-=2;weapons.axe=true;weaponOwned=true;showMsg('石斧製作完成！可從背包放入快速物品欄');updateHud()}
+function craftBow(){if(weapons.bow){showMsg('已經製作過簡易弓');return}if(wood<4||fiber<4){showMsg('材料不足：木材 ×4、纖維 ×4');return}wood-=4;fiber-=4;weapons.bow=true;weaponOwned=true;showMsg('簡易弓製作完成！可從背包放入快速物品欄');updateHud()}
+function craftFlare(){if(weapons.flare){showMsg('已經製作過訊號手槍');return}if(stone<3||metalParts<2){showMsg('材料不足：石材 ×3、金屬零件 ×2（搜刮警務站或研究站）');return}stone-=3;metalParts-=2;weapons.flare=true;weaponOwned=true;showMsg('訊號手槍製作完成！可從背包放入快速物品欄');updateHud()}
+function craftMed(){if(cloth<2||herbs<2){showMsg('材料不足：需要布料 ×2、草藥 ×2');return}cloth-=2;herbs-=2;medkits++;showMsg('製作完成：醫療包 +1');updateHud()}
+function craftHerbKit(){if(herbs<2||fiber<1){showMsg('材料不足：需要草藥 ×2、纖維 ×1');return}herbs-=2;fiber--;health=Math.min(100,health+28);showMsg('使用草藥敷料，生命恢復');updateHud()}
+function buildShelter(){if(wood<5||fiber<4){showMsg('材料不足：需要木材 ×5、纖維 ×4');return}wood-=5;fiber-=4;const x=player.x-Math.sin(yaw)*3,z=player.z-Math.cos(yaw)*3,g=new THREE.Group();const floor=new THREE.Mesh(new THREE.BoxGeometry(3.2,.18,2.8),makeMat(0x795b3c));floor.position.y=.1;g.add(floor);for(let i=0;i<4;i++){const p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,2.1,6),makeMat(0x76583a));p.position.set(i%2?1.45:-1.45,1.05,i<2?1.2:-1.2);g.add(p)}const roof=new THREE.Mesh(new THREE.ConeGeometry(2.5,1.2,4),makeMat(0x61734e));roof.position.y=2.35;roof.rotation.y=Math.PI/4;g.add(roof);g.position.set(x,terrainHeight(x,z),z);scene.add(g);shelters.push({x,z,group:g});addBoxCollider(x,z,1.65,1.45);showMsg('簡易遮雨棚已建好！靠近可減緩夜間體力消耗');updateHud()}
+function craftCampKit(){if(wood<6||fiber<2){showMsg('材料不足：安全營地套件需要木材 ×6、纖維 ×2');return}wood-=6;fiber-=2;campKits++;showMsg('安全營地套件製作完成！可在背包中放入快速物品欄');updateHud()}
+function placeCampKit(){if(campKits<=0){showMsg('沒有安全營地套件，請先到製作台製作');return}let a=yaw,x=player.x-Math.sin(a)*4,z=player.z-Math.cos(a)*4;if(Math.hypot(x,z)>126){showMsg('太靠近海岸，無法建立營地');return}campKits--;const g=new THREE.Group();const floor=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.5,.25,12),makeMat(0x8b704e));floor.position.y=.15;g.add(floor);const fire=new THREE.Mesh(new THREE.SphereGeometry(.38,10,8),new THREE.MeshBasicMaterial({color:0xffa64d}));fire.position.y=.7;g.add(fire);const glow=new THREE.PointLight(0xff9b4d,1.8,12);glow.position.y=1.2;g.add(glow);g.position.set(x,terrainHeight(x,z),z);scene.add(g);camps.push({x,z,group:g});showMsg('安全營地已建立！靠近營地可緩慢恢復生命');updateHud()}
+function craftPulse(){if(stone<2||fiber<2){showMsg('材料不足：防護脈衝需要石材 ×2、纖維 ×2');return}stone-=2;fiber-=2;pulses++;showMsg('防護脈衝製作完成！已放入物品欄');updateHud()}
+function craftMarker(){if(wood<2){showMsg('木材不足：需要木材 ×2');return}wood-=2;let nearest=items.filter(i=>i.type!=='crate').sort((a,b)=>Math.hypot(a.x-player.x,a.z-player.z)-Math.hypot(b.x-player.x,b.z-player.z)).slice(0,3);if(nearest.length){nearest.forEach(i=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(.85,.08,6,20),new THREE.MeshBasicMaterial({color:0x9affb0}));ring.rotation.x=Math.PI/2;ring.position.set(i.x,terrainHeight(i.x,i.z)+1.35,i.z);scene.add(ring);setTimeout(()=>scene.remove(ring),12000)});showMsg('補給標記已啟動：附近物資將短暫顯示綠色標記')}else showMsg('附近沒有可標記的物資');updateHud()}
+$('saveBtn').onclick=()=>saveGame(false);$('loadBtn').onclick=()=>{if(loadGame()){started=true;$('start').style.display='none';clock.getDelta();}};$('craftBtn').onclick=()=>toggleCraft();$('closeCraft').onclick=()=>toggleCraft(false);$('makeMed').onclick=craftMed;$('makeSpear').onclick=craftSpear;$('makeAxe').onclick=craftAxe;$('makeBow').onclick=craftBow;$('makeFlare').onclick=craftFlare;$('makeCamp').onclick=craftCampKit;$('makePulse').onclick=craftPulse;$('makeMarker').onclick=craftMarker;$('makeShelter').onclick=buildShelter;$('makeHerbKit').onclick=craftHerbKit;
+
+
+// 2.17.7: fruit-tree harvesting lifecycle, reliable hotbar drop targets, and scene-owned camera-follow flashlight.
+// 2.17.8: occupied hotbar slots can now be dragged to swap positions.
+// 2.17 Backpack + fixed nine-slot hotbar. Slot 10 is an ellipsis button.
+let selectedQuickItem=null,pendingBackpackItem=null,pendingHotbarSourceIndex=-1,selectedSlot=-1,inventoryDragging=false,inventoryDropDone=false;
+let hotbarSlots=['food','water','med','spear','axe','bow','flare','light','pulse'];
+const quickDefs=[
+ {id:'food',icon:'🍓',name:'食物',kind:'consume',count:()=>food},
+ {id:'water',icon:'🧴',name:'飲水',kind:'consume',count:()=>water},
+ {id:'med',icon:'🩹',name:'醫療包',kind:'consume',count:()=>medkits},
+ {id:'spear',icon:'🔱',name:'長矛',kind:'weapon',weapon:'spear'},
+ {id:'axe',icon:'🪓',name:'石斧',kind:'weapon',weapon:'axe'},
+ {id:'bow',icon:'🏹',name:'簡易弓',kind:'weapon',weapon:'bow'},
+ {id:'flare',icon:'🚩',name:'訊號槍',kind:'weapon',weapon:'flare'},
+ {id:'light',icon:'🔦',name:'手電筒',kind:'tool'},
+ {id:'pulse',icon:'⚡',name:'防護脈衝',kind:'pulse',count:()=>pulses},
+ {id:'campkit',icon:'🏕️',name:'安全營地套件',kind:'campkit',count:()=>campKits},
+ {id:'wood',icon:'🪵',name:'木材',kind:'material',count:()=>wood},
+ {id:'stone',icon:'🪨',name:'石材',kind:'material',count:()=>stone},
+ {id:'fiber',icon:'🌿',name:'纖維',kind:'material',count:()=>fiber},
+ {id:'cloth',icon:'🧵',name:'布料',kind:'material',count:()=>cloth},
+ {id:'herb',icon:'🌱',name:'草藥',kind:'material',count:()=>herbs},
+ {id:'metal',icon:'⚙️',name:'金屬零件',kind:'material',count:()=>metalParts}
+];
+function ownedQuick(d){return d.kind==='weapon'?!!weapons[d.weapon]:d.kind==='tool'?true:d.count()>0}
+function quickById(id){return quickDefs.find(d=>d.id===id)}
+function selectQuick(id){const d=quickById(id);if(!d||!ownedQuick(d)){showMsg('背包中沒有'+(d?.name||'這項物品'));return}selectedQuickItem=id;
+ if(d.kind==='weapon'){weaponType=d.weapon;weaponEquipped=true;syncHeldItem();}
+ else if(d.kind==='tool'){if(weaponEquipped){weaponEquipped=false;syncHeldItem();}}
+ renderQuickbar();renderBackpack();
+}
+function selectHotbarSlot(index){if(index<0||index>8)return;selectedSlot=index;const id=hotbarSlots[index];if(id&&ownedQuick(quickById(id)))selectQuick(id);else{selectedQuickItem=null;renderQuickbar();showMsg('這格目前沒有可用物品');}}
+function assignBackpackItemToSlot(index){
+ if(!pendingBackpackItem){showMsg('請先在背包點選一件物品');return;}
+ if(index<0||index>8)return;
+ const item=quickById(pendingBackpackItem);if(!item||!ownedQuick(item)){showMsg('這件物品目前不可用');pendingBackpackItem=null;renderBackpack();return;}
+ const itemId=pendingBackpackItem;
+ // A drag can originate either in the backpack or from an occupied hotbar slot.
+ // Prefer the explicit source slot so the two slots are swapped, not duplicated.
+ const sourceIndex=pendingHotbarSourceIndex>=0?pendingHotbarSourceIndex:hotbarSlots.indexOf(itemId);
+ const target=hotbarSlots[index];
+ if(sourceIndex>=0&&sourceIndex!==index)hotbarSlots[sourceIndex]=target||null;
+ hotbarSlots[index]=itemId;selectedSlot=index;selectedQuickItem=itemId;
+ pendingBackpackItem=null;pendingHotbarSourceIndex=-1;inventoryDragging=false;
+ if(item.kind==='weapon'){weaponType=item.weapon;weaponEquipped=true;syncHeldItem();}
+ else if(weaponEquipped){weaponEquipped=false;syncHeldItem();}
+ renderQuickbar();renderBackpack();showMsg('已替換第 '+(index+1)+' 格：'+item.name);
+}
+function useSelectedQuick(){const d=quickById(selectedQuickItem);if(!d||!ownedQuick(d)){showMsg('請先從物品欄選擇已持有的物品');return}
+ if(d.kind==='weapon'){if(!weaponEquipped||weaponType!==d.weapon){weaponType=d.weapon;weaponEquipped=true;syncHeldItem();}attack();return}
+ if(d.kind==='pulse'){pulse();renderQuickbar();renderBackpack();return}
+ if(d.kind==='campkit'){placeCampKit();renderQuickbar();renderBackpack();return}
+ if(d.kind==='material'){showMsg(`${d.name}：${d.count()} 個，可用於製作配方`);return}
+ if(d.id==='food'){if(hunger>=96){showMsg('目前不太餓，不需要進食');return}food--;hunger=Math.min(100,hunger+35);triggerPickup();showMsg('吃下食物，飢餓值恢復');}
+ else if(d.id==='water'){if(thirst>=96){showMsg('目前不太渴，不需要喝水');return}water--;thirst=Math.min(100,thirst+40);triggerPickup();showMsg('喝下飲水，口渴值恢復');}
+ else if(d.id==='med'){if(health>=96){showMsg('生命值充足，暫時不需要醫療包');return}medkits--;health=Math.min(100,health+45);triggerPickup();showMsg('使用醫療包，生命恢復');}
+ else if(d.id==='light'){toggleFlashlight();}
+ updateHud();renderBackpack();renderQuickbar();
+}
+function spawnDroppedItem(id){const d=quickById(id);if(!d||!scene||!player)return;const x=player.x-Math.sin(yaw)*1.35,z=player.z-Math.cos(yaw)*1.35;const colors={food:0xc95c55,water:0x5aa8cf,med:0xd8d5c8,pulse:0x8b70d5,campkit:0x9a8057,wood:0x8b5a36,stone:0x858b91,fiber:0x789b55,cloth:0x9f7c9d,herb:0x5f9b54,metal:0x9ba5aa,spear:0x8c9d9a,axe:0x929b9a,bow:0x9a7047,flare:0xb65d42};const material=new THREE.MeshStandardMaterial({color:colors[id]||0x9aa69b,roughness:.85});const geometry=['food','med','pulse'].includes(id)?new THREE.IcosahedronGeometry(.28,0):new THREE.BoxGeometry(.42,.32,.42);const mesh=new THREE.Mesh(geometry,material);mesh.position.set(x,terrainHeight(x,z)+.32,z);scene.add(mesh);items.push({type:'dropped',dropId:id,x,z,mesh,opened:false,resource:false});}
+function dropSelected(){const d=quickById(selectedQuickItem);if(!d||!ownedQuick(d)){showMsg('沒有可丟棄的選取物品');return}
+ if(d.kind==='weapon'){weapons[d.weapon]=false;weaponOwned=Object.values(weapons).some(Boolean);if(weaponType===d.weapon){weaponEquipped=false;syncHeldItem();}}
+ else if(d.kind==='tool'){showMsg('手電筒是基本裝備，無法丟棄');return}
+ else if(d.kind==='consume'||d.kind==='pulse'||d.kind==='campkit'||d.kind==='material'){if(d.count()<=0)return;switch(d.id){case'food':food--;break;case'water':water--;break;case'med':medkits--;break;case'pulse':pulses--;break;case'campkit':campKits--;break;case'wood':wood--;break;case'stone':stone--;break;case'fiber':fiber--;break;case'cloth':cloth--;break;case'herb':herbs--;break;case'metal':metalParts--;break;}}
+ spawnDroppedItem(d.id);showMsg('已丟棄：'+d.name+'（可重新拾取）');updateHud();renderBackpack();renderQuickbar();
+}
+function renderQuickbar(){
+ // Keep the existing drag source and drop targets alive until the current drag finishes.
+ if(inventoryDragging)return;
+ const el=$('hotbar');if(!el)return;el.innerHTML='';
+ for(let i=0;i<9;i++){
+  const id=hotbarSlots[i],d=id?quickById(id):null,available=d&&ownedQuick(d);
+  const b=document.createElement('button');b.type='button';b.dataset.slotIndex=String(i);
+  b.className='hot-slot'+(i===selectedSlot?' selected':'')+(!available?' empty':'')+(pendingBackpackItem?' pending-target':'');
+  b.title='第 '+(i+1)+' 格'+(d?'：'+d.name:'');
+  if(available){
+   const count=d.kind==='weapon'||d.kind==='tool'?'':d.count();b.innerHTML=`<span class="ico">${d.icon}</span>${count!==''?`<span class="hot-count">${count}</span>`:''}`;
+   b.draggable=true;
+   b.addEventListener('dragstart',e=>{inventoryDragging=true;inventoryDropDone=false;pendingBackpackItem=id;pendingHotbarSourceIndex=i;keys={};if(e.dataTransfer){e.dataTransfer.setData('text/plain',id);e.dataTransfer.setData('text',id);e.dataTransfer.effectAllowed='move';}});
+   b.addEventListener('dragend',()=>{inventoryDragging=false;keys={};if(!inventoryDropDone){pendingBackpackItem=null;pendingHotbarSourceIndex=-1;renderQuickbar();}});
+  } else b.innerHTML='<span class="ico">　</span>';
+  el.appendChild(b);
+ }
+ const more=document.createElement('button');more.type='button';more.className='hot-slot ellipsis-slot';more.title='開啟背包';more.textContent='...';more.onclick=()=>toggleBackpack();el.appendChild(more);
+}
+function renderBackpack(){
+ // Do not replace draggable backpack items while the browser is carrying one.
+ if(inventoryDragging)return;
+ const grid=$('bpGrid'),res=$('bpResources');if(!grid||!res)return;grid.innerHTML='';
+ quickDefs.filter(d=>ownedQuick(d)).forEach(d=>{
+  const n=d.kind==='weapon'?'已持有':d.kind==='tool'?'基本裝備':`數量：${d.count()}`;
+  const b=document.createElement('button');b.type='button';b.dataset.itemId=d.id;b.className='bpitem'+(pendingBackpackItem===d.id?' pending':'');
+  b.draggable=true;b.addEventListener('dragstart',e=>{inventoryDragging=true;inventoryDropDone=false;pendingBackpackItem=d.id;pendingHotbarSourceIndex=-1;keys={};if(e.dataTransfer){e.dataTransfer.setData('text/plain',d.id);e.dataTransfer.setData('text',d.id);e.dataTransfer.effectAllowed='move';}renderQuickbar();});b.addEventListener('dragend',()=>{inventoryDragging=false;keys={};if(!inventoryDropDone){pendingBackpackItem=null;renderBackpack();renderQuickbar();}});b.innerHTML=`<b>${d.icon}</b>${d.name}<br><small>${n}</small>`;grid.appendChild(b);
+ });
+ const resources=[['🪵 木材',wood],['🪨 石材',stone],['🌾 纖維',fiber],['🧵 布料',cloth],['🌱 草藥',herbs],['⚙️ 金屬零件',metalParts],['⚡ 防護脈衝',pulses],['🏕️ 營地套件',campKits]];
+ res.innerHTML=resources.map(([n,v])=>`<span>${n}：${v}</span>`).join('');
+ const total=food+water+medkits+Object.values(weapons).filter(Boolean).length+wood+stone+fiber+cloth+herbs+metalParts+pulses+campKits;$('bagCount').textContent=total;
+}
+// Delegated click handlers survive redraws and ensure a selected backpack item can always be assigned.
+$('bpGrid').addEventListener('click',e=>{
+ const b=e.target.closest('[data-item-id]');if(!b)return;const d=quickById(b.dataset.itemId);if(!d||!ownedQuick(d))return;
+ pendingBackpackItem=d.id;pendingHotbarSourceIndex=-1;renderBackpack();renderQuickbar();showMsg('已選取 '+d.name+'；請點快捷欄 1–9 格完成替換，也可直接拖曳');
+});
+const hotbarEl=$('hotbar');
+['dragenter','dragover'].forEach(type=>hotbarEl.addEventListener(type,e=>{if(inventoryDragging||pendingBackpackItem){e.preventDefault();e.stopPropagation();if(e.dataTransfer){e.dataTransfer.dropEffect='move';}}},true));
+hotbarEl.addEventListener('drop',e=>{if(!inventoryDragging&&!pendingBackpackItem)return;e.preventDefault();e.stopPropagation();let b=document.elementFromPoint(e.clientX,e.clientY)?.closest('#hotbar [data-slot-index]');if(!b){const slots=[...hotbarEl.querySelectorAll('[data-slot-index]')];b=slots.sort((a,c)=>Math.abs((a.getBoundingClientRect().left+a.offsetWidth/2)-e.clientX)-Math.abs((c.getBoundingClientRect().left+c.offsetWidth/2)-e.clientX))[0];}const id=e.dataTransfer?.getData('text/plain')||e.dataTransfer?.getData('text')||pendingBackpackItem;if(id)pendingBackpackItem=id;if(!b){pendingBackpackItem=null;pendingHotbarSourceIndex=-1;inventoryDropDone=true;inventoryDragging=false;renderQuickbar();showMsg('請將物品放在快捷欄的 1–9 格上');return;}inventoryDropDone=true;inventoryDragging=false;keys={};assignBackpackItemToSlot(Number(b.dataset.slotIndex));},true);
+$('hotbar').addEventListener('click',e=>{
+ const b=e.target.closest('[data-slot-index]');if(!b)return;const i=Number(b.dataset.slotIndex);
+ if(pendingBackpackItem){assignBackpackItemToSlot(i);return;}
+ if($('backpackPanel').classList.contains('open')){showMsg('請先在背包點選要放入快捷欄的物品');return;}
+ selectHotbarSlot(i);
+});
+function openBackpack(){if(!$('backpackPanel').classList.contains('open')){$('backpackPanel').classList.add('open');renderBackpack();renderQuickbar();if(document.pointerLockElement)document.exitPointerLock();}}
+function closeBackpack(){
+ const wasOpen=$('backpackPanel').classList.contains('open');
+ $('backpackPanel').classList.remove('open');pendingBackpackItem=null;pendingHotbarSourceIndex=-1;inventoryDragging=false;inventoryDropDone=false;keys={};renderBackpack();renderQuickbar();
+ // Pointer lock must be requested synchronously from the user's close action.
+ if(wasOpen&&started&&!ended&&matchMedia('(pointer:fine)').matches)safeRequestPointerLock();
+}
+function toggleBackpack(){if($('backpackPanel').classList.contains('open'))closeBackpack();else openBackpack();}
+$('closeBag').onclick=closeBackpack;$('selectedAction')?.remove();
+const _oldUpdateHud=updateHud;updateHud=function(){_oldUpdateHud();renderQuickbar();if($('backpackPanel')?.classList.contains('open'))renderBackpack()};
+// Settings: graphics quality and draggable mobile HUD layout
+const settingsPanel=$('settingsPanel'),settingsBtn=$('settingsBtn');
+settingsBtn.addEventListener('click',()=>settingsPanel.classList.toggle('open'));
+$('closeSettings').onclick=()=>settingsPanel.classList.remove('open');
+function applyQuality(level){if(!renderer)return;const touch=matchMedia('(pointer:coarse)').matches||innerWidth<760;const cfg={low:{ratio:.65,shadow:false},medium:{ratio:touch?.85:1,shadow:false},high:{ratio:Math.min(devicePixelRatio,1.35),shadow:false}}[level]||{ratio:1,shadow:false};renderer.setPixelRatio(cfg.ratio);renderer.shadowMap.enabled=cfg.shadow;renderer.setSize(innerWidth,innerHeight);try{localStorage.setItem('iz_quality',level)}catch(e){}}
+const qualitySelect=$('qualitySelect');try{const savedQuality=localStorage.getItem('iz_quality');if(savedQuality)qualitySelect.value=savedQuality}catch(e){}
+qualitySelect.addEventListener('change',()=>{applyQuality(qualitySelect.value);showMsg('畫質已調整')});
+let layoutEditing=false;
+const movableIds=['moveStick','lookZone','hotbar','actions'];
+function loadHudPositions(){try{const data=JSON.parse(localStorage.getItem('iz_hud_positions')||'{}');for(const id of movableIds){const el=$(id);if(data[id]&&el){el.style.left=data[id].left;el.style.top=data[id].top;el.style.right=data[id].right||'auto';el.style.bottom=data[id].bottom||'auto';el.style.transform=data[id].transform||'none';}}}catch(e){}}
+function saveHudPositions(){const data={};for(const id of movableIds){const el=$(id);if(el&&(el.dataset.moved==='1'))data[id]={left:el.style.left,top:el.style.top,right:el.style.right,bottom:el.style.bottom,transform:el.style.transform};}try{localStorage.setItem('iz_hud_positions',JSON.stringify(data))}catch(e){}}
+function setLayoutEdit(on){layoutEditing=on;document.body.classList.toggle('layout-edit',on);$('editControls').textContent='調整按鍵位置：'+(on?'開啟中（完成請再按）':'關閉');if(on)showMsg('拖曳黃色框線的控制區來調整位置');else{saveHudPositions();showMsg('控制位置已保存');}}
+$('editControls').onclick=()=>setLayoutEdit(!layoutEditing);
+$('resetControls').onclick=()=>{try{localStorage.removeItem('iz_hud_positions')}catch(e){}location.reload()};
+loadHudPositions();
+for(const id of movableIds){const el=$(id);if(!el)continue;let drag=null;el.addEventListener('pointerdown',e=>{if(!layoutEditing||e.pointerType==='mouse'&&e.button!==0)return;drag={x:e.clientX,y:e.clientY,left:el.getBoundingClientRect().left,top:el.getBoundingClientRect().top};el.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});el.addEventListener('pointermove',e=>{if(!drag||!layoutEditing)return;const x=Math.max(0,Math.min(innerWidth-el.offsetWidth,drag.left+e.clientX-drag.x));const y=Math.max(0,Math.min(innerHeight-el.offsetHeight,drag.top+e.clientY-drag.y));el.style.left=x+'px';el.style.top=y+'px';el.style.right='auto';el.style.bottom='auto';el.style.transform='none';el.dataset.moved='1';e.preventDefault()});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,()=>{if(drag){drag=null;saveHudPositions()}}));}
+// Initialize the renderer first, then apply the selected quality.
+try{init();applyQuality(qualitySelect.value);refreshSaveInfo();}catch(err){console.error('ISLAND ZERO initialization failed:',err);const info=$('saveInfo');if(info)info.textContent='遊戲初始化失敗：'+(err&&err.message?err.message:'未知錯誤')+'。請重新整理頁面。';const btn=$('startBtn');if(btn){btn.disabled=true;btn.textContent='初始化失敗，請重新整理';}}
+})();
+</script>
+</body>
+</html>
